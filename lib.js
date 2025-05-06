@@ -1,13 +1,7 @@
 // monaco-dialog-modal-block
-
 const puppeteer = require('puppeteer');
 const { exec } = require('child_process');
-// const os = require('os'); // Add this at the top
-
-const machineName = 'hh';
-console.log(`Running on machine: ${machineName}`);
-
-const workerName = 'dnd_' + machineName
+const workerName = 'd_'
 
 async function waitForClassToExist(page, classSelector, maxWaitTimeMs = 5 * 60 * 1000, checkIntervalMs = 10 * 1000) {
     console.log(`Starting to wait for class '${classSelector}' to appear...`);
@@ -101,22 +95,33 @@ const initConnection = async (port) => {
 }
 
 
-const openChrome_ = async (port) => {
-    // const chromePath = '"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"';
-    const chromePath = '/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome'; // macOS path
-    const remoteDebugCmd = `${chromePath} --remote-debugging-port=${port} --user-data-dir=`;
-    //  --user-data-dir="/tmp/chrome-profile"
-    return new Promise((resolve, reject) => {
-        exec(remoteDebugCmd, (error) => {
-            if (error) {
-                console.error(`Error launching Chrome: ${error.message}`);
-                reject(error);
-            } else {
-                console.log('Chrome launched with remote debugging');
-                resolve();
-            }
-        });
+const openOldConnection = async (port) => {
+    // Connect to the already running Chrome instance
+    const browser = await puppeteer.connect({
+        browserURL: 'http://localhost:' + port,
+        defaultViewport: null,
     });
+
+    // Open a new tab (page)
+    const page = await browser.newPage();
+    await page.goto('https://idx.google.com');
+
+
+    console.log('New tab opened in existing Chrome!');
+    await page.waitForSelector('#mat-input-0');
+
+    // Type text into the input with ID mat-input-0
+    await page.type('#mat-input-0', workerName);
+
+
+    await page.keyboard.press('Enter');
+    // Wait for 2 seconds before pressing Enter
+    // await page.waitForTimeout(2000); 
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const currentUrl = await page.url();
+    console.log('Current URL path:', currentUrl);
+    return page;
 }
 
 
@@ -125,7 +130,7 @@ const openChrome = async (port) => {
     const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
     
     // When passing to exec, properly escape spaces and quotes
-    const remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir=/tmp/chrome-profile1`;
+    const remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir=./profile/chrome-profile${port}`;
     
     return new Promise((resolve, reject) => {
         console.log('Executing:', remoteDebugCmd);
@@ -141,25 +146,9 @@ const openChrome = async (port) => {
     });
 }
 
-const main = async (port) => {
-    try {
-        // openChrome(port);
-        const page = await initConnection(port);
-        const classFound = await waitForClassToExist(page, '.is-loaded');
-        if (!classFound) {
-            console.log('Class not found, exiting...');
-            await browser.close();
-            return;
-        }
-        await runCMD(page, workerName);
-        await page.keyboard.press('Enter');
-        console.log('Text typed into currently focused element');
-
-    } catch (error) {
-        console.error('Error killing Chrome:', error);
-    }
+module.exports = {
+    openChrome,
+    initConnection,
+    runCMD,
+    waitForClassToExist
 }
-(async () => {
-    // main(9222);
-    main(9224);
-})();
