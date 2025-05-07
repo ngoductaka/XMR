@@ -45,6 +45,8 @@ const runReset = async (port) => {
 
     const page = await browser.newPage();
     await page.goto("https://idx-react4-1746439876356.cluster-ejd22kqny5htuv5dfowoyipt52.cloudworkstations.dev/?folder=/home/user/react4");
+
+    await new Promise(resolve => setTimeout(resolve, 3 * 1000));
     await page.waitForSelector('.menubar-menu-button', { timeout: 5000 });
     await page.click('.menubar-menu-button');
 
@@ -58,6 +60,11 @@ const runReset = async (port) => {
     try {
         await page.waitForSelector('.action-label[aria-label="New Terminal"]', { timeout: 5000 });
         await page.click('.action-label[aria-label="New Terminal"]');
+
+
+    const dnd = await page.$$('.action-label[aria-label="New Terminal"]').catch((err) => { });
+    console.log('dnd____', dnd);
+
     } catch (err) {
         console.error('Error clicking on Terminal or New Terminal:', err);
     }
