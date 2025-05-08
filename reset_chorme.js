@@ -55,14 +55,6 @@ const combineOpenReset = async (port) => {
     const profileName  = `chrome-profile${port}`;
     await killChromeProcess(profileName)
     openChrome(port, profileName)
-        .catch(err => {
-            console.error('Failed to start Chrome:', err)
-            openChrome(port)
-            setTimeout(() => {
-                console.log('Chrome opened successfully1');
-                runReset(port)
-            }, 2000);
-        });
     setTimeout(() => {
         console.log('Chrome opened successfully2');
         runReset(port);
@@ -72,6 +64,6 @@ const main = async () => {
     combineOpenReset(port);
     setInterval(() => {
         combineOpenReset(port);
-    }, 1000 * 60 * 50);
+    }, 1000 * 60 * 60);
 }
 main();
