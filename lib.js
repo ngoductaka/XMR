@@ -204,7 +204,11 @@ const runRestartScript = (script) => {
 }
 const openChrome = async (port, profile) => {
     // For macOS, no need for escape sequences in the variable itself
-    const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+    // const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+
+    const chromePath = process.platform === 'win32'
+        ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+        : '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
     // When passing to exec, properly escape spaces and quotes
     const remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir=./profile/${profile}`;

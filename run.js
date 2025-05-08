@@ -86,6 +86,6 @@ const main = async (port) => {
     combineOpenReset(port);
     setInterval(() => {
         combineOpenReset(port);
-    }, 1000 * 60 * 60);
+    }, 1000 * 60 * 40);
 }
 main(port);
