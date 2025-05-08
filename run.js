@@ -3,7 +3,7 @@ const {
     openChrome,
     openOldConnection,
     resetWithLink,
-    killChromeProcess
+    closeAllTabs
 } = require('./lib');
 
 const count = process.argv[2] ? parseInt(process.argv[2], 10) : 1;
@@ -71,7 +71,7 @@ const runJob = async (port) => {
     for (const link of mainTargetLinks) {
         await reset(browser, link.href).catch(() => reset(browser, link.href).catch());
     }
-
+    closeAllTabs(browser)
 }
 const combineOpenReset = async (port) => {
     const profileName = `chrome-profile${port}`;

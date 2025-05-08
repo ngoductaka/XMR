@@ -360,7 +360,26 @@ const killChromeProcess = (name) => {
         });
     })
 };
-
+const closeAllTabs = async (browser) => {
+    try {
+        // Get all pages (tabs) in the browser
+        const pages = await browser.pages();
+        console.log(`Closing ${pages.length} tabs...`);
+        
+        // Close each page
+        for (const page of pages) {
+            await page.close().catch(err => {
+                console.log(`Error closing tab: ${err.message}`);
+            });
+        }
+        
+        console.log('All tabs closed successfully');
+        return true;
+    } catch (error) {
+        console.error(`Error closing tabs: ${error.message}`);
+        return false;
+    }
+};
 module.exports = {
     openChrome,
     initConnection,
@@ -370,5 +389,6 @@ module.exports = {
     clickCMD,
     runRestartScript,
     resetWithLink,
-    killChromeProcess
+    killChromeProcess,
+    closeAllTabs
 }
