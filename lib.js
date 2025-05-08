@@ -174,7 +174,9 @@ const openOldConnection = async (port) => {
     await page.goto('https://idx.google.com');
 
     // Wait for selector to ensure the page is loaded
-    await page.waitForSelector('.main-target', { timeout: 100 * 1000 });
+    await page.waitForSelector('.main-target', { timeout: 22 * 1000 }).catch(() => {
+        return { browser, page, mainTargetLinks: [] };
+    });
 
     // Get list of <a> tags with ID/class main-target and their href values
     const mainTargetLinks = await page.evaluate(() => {

@@ -1,3 +1,4 @@
+const { exec } = require('child_process');
 const {
     openChrome,
     openOldConnection,
@@ -61,7 +62,7 @@ const create = async (page, name) => {
 const runJob = async (port) => {
     const { browser, page, mainTargetLinks } = await openOldConnection(port);
     if (mainTargetLinks.length < 10) {
-        for (let i = mainTargetLinks.length; i < 11; i++) {
+        for (let i = mainTargetLinks.length; i < 10; i++) {
             await create(page, name + i).catch(() => create(page, name + i).catch());
         }
     }
@@ -80,10 +81,10 @@ const combineOpenReset = async (port) => {
         runJob(port);
     }, 2000);
 }
-const main = async () => {
+const main = async (port) => {
     combineOpenReset(port);
     setInterval(() => {
         combineOpenReset(port);
     }, 1000 * 60 * 60);
 }
-main();
+main(port);
