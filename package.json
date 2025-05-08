@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dev.js",
+    "start": "node run_all.js",
     "m1": "node run.js 1 w_1",
     "m2": "node run.js 2 w_2",
     "m3": "node run.js 3 w_3",
