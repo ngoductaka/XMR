@@ -52,10 +52,11 @@ const create = async (page, name) => {
         await page.waitForSelector('#mat-input-0');
         await page.type('#mat-input-0', name);
         await page.keyboard.press('Enter');
-        await page.waitForSelector('iframe.is-loaded', { timeout: 10 * 60 * 1000 });
+        await page.waitForSelector('iframe.is-loaded', { timeout: 2 * 60 * 1000 });
         await page.close();
     } catch (error) {
-        console.error('Error killing Chrome:', error);
+        console.error('Error Create:', error);
+        return 1;
     }
 }
 
@@ -74,7 +75,7 @@ const runJob = async (port) => {
 }
 const combineOpenReset = async (port) => {
     const profileName = `chrome-profile${port}`;
-    await killChromeProcess(profileName)
+    // await killChromeProcess(profileName)
     openChrome(port, profileName)
     setTimeout(() => {
         console.log('Chrome opened successfully2');

@@ -7,7 +7,7 @@ const runProcess = (command) => {
             setTimeout(() => {
                 console.log('_________________Retrying command:', command);
                 runProcess(command);
-            }, 1000 * 60 * 10);
+            }, 1000 * 60 * 30);
         }
         if (stderr) {
             console.error(`__________________stderr: ${stderr}`);
