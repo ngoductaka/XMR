@@ -1,10 +1,6 @@
 const puppeteer = require('puppeteer');
 const {
     openChrome,
-    waitForClassToExist,
-    openOldConnection,
-    clickCMD,
-    clickCMD_
 } = require('./lib');
 
 const port = process.argv[2] ? parseInt(process.argv[2], 10) : 9224;

@@ -41,6 +41,7 @@ const reset = async (browser, link) => {
 
 const runReset = async (port) => {
     const { browser, page, mainTargetLinks } = await openOldConnection(port);
+    page.close();
     mainTargetLinks.reverse();
     for (const link of mainTargetLinks) {
         await reset(browser, link.href).catch(err => {
@@ -50,13 +51,13 @@ const runReset = async (port) => {
     }
 
 }
-const main = async () => {
-    // await killChromeProcess(`chrome-profile${port}`);
-    openChrome(port)
+const combineOpenReset = async (port) => {
+    const profileName  = `chrome-profile${port}`;
+    await killChromeProcess(profileName)
+    openChrome(port, profileName)
         .catch(err => {
             console.error('Failed to start Chrome:', err)
             openChrome(port)
-
             setTimeout(() => {
                 console.log('Chrome opened successfully1');
                 runReset(port)
@@ -66,5 +67,11 @@ const main = async () => {
         console.log('Chrome opened successfully2');
         runReset(port);
     }, 2000);
+}
+const main = async () => {
+    combineOpenReset(port);
+    setInterval(() => {
+        combineOpenReset(port);
+    }, 1000 * 60 * 50);
 }
 main();
