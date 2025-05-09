@@ -68,10 +68,10 @@ function readDirectory(directoryPath) {
 }
 
 const main = async () => {
-    const profilePath = path.join(__dirname, 'profile');
-    const fileList = readDirectory(profilePath);
-    console.log(fileList);
-    exec(`yarn m${1}`)
+    // const profilePath = path.join(__dirname, 'profile');
+    // const fileList = readDirectory(profilePath);
+    // console.log(fileList);
+    exec(`node run.js ${1} w_${1}`)
     // await runProcessPro(`yarn m${1}`)
     // for (const element of fileList) {
     //     const name = element[element.length - 1];

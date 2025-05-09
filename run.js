@@ -69,6 +69,8 @@ const runJob = async (port, name) => {
                 await create(page, name + i).catch();
             }
         }
+
+        await closeAllTabs(browser, true)
         // reset
         mainTargetLinks.reverse();
         for (const link of mainTargetLinks) {

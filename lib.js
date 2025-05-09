@@ -360,19 +360,23 @@ const killChromeProcess = (name) => {
         });
     })
 };
-const closeAllTabs = async (browser) => {
+const closeAllTabs = async (browser, saveOne = false) => {
     try {
         // Get all pages (tabs) in the browser
-        const pages = await browser.pages();
+        const all = await browser.pages();
+        all.reverse();
+        const [first, ...pages] = all;
         console.log(`Closing ${pages.length} tabs...`);
-        
+        if (!saveOne) {
+            await first.close().catch();
+        }
         // Close each page
         for (const page of pages) {
             await page.close().catch(err => {
                 console.log(`Error closing tab: ${err.message}`);
             });
         }
-        
+
         console.log('All tabs closed successfully');
         return true;
     } catch (error) {
