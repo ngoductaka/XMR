@@ -1,46 +1,7 @@
 
 const { fork } = require('child_process');
-
-// const runProcessPro = (command) => {
-//     return new Promise((res, rej) => {
-//         exec(command, (error) => {
-//             if (error) {
-//                 console.error(`___________________Error: ${command} ${error.message}`);
-//                 rej(error);
-//             } else {
-//                 console.error(`___________________SS: ${command}`);
-//                 res();
-//             }
-//         });
-//     })
-// }
-
-
-// const runProcess = (command) => {
-//     exec(command, (error, stdout, stderr) => {
-//         if (error) {
-//             console.error(`___________________Error: ${error.message}`);
-//             setTimeout(() => {
-//                 console.log('_________________Retrying command:', command);
-//                 runProcess(command);
-//             }, 1000 * 60 * 10);
-//         }
-//         setTimeout(() => {
-//             console.log('_________________Retrying command:', command);
-//             runProcess(command);
-//         }, 1000 * 60 * 40);
-//         if (stderr) {
-//             console.error(`__________________stderr: ${stderr}`);
-//         }
-//         if (stdout) {
-//             console.log(`__________________stdout: ${stdout}`);
-//         }
-//     });
-// }
-
-
-// const fs = require('fs');
-// const path = require('path');
+const fs = require('fs');
+const path = require('path');
 
 function readDirectory(directoryPath) {
     console.log(`Reading files in: ${directoryPath}\n`);
@@ -72,6 +33,7 @@ const runTerminal = (port, name) => {
         const child = fork('./run.js', [port, name]);
         child.on('close', (code) => {
             console.log(`close_________ ${code}`);
+            rej();
         });
         child.on('exit', (code) => {
             console.log(`exit__________ ${code}`);
