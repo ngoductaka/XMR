@@ -53,7 +53,7 @@ const create = async (page, name) => {
         await page.waitForSelector('#mat-input-0');
         await page.type('#mat-input-0', name);
         await page.keyboard.press('Enter');
-        await page.waitForSelector('iframe.is-loaded', { timeout: 2 * 60 * 1000 });
+        await page.waitForSelector('iframe.is-loaded', { timeout: 1 * 60 * 1000 });
         await page.close();
     } catch (error) {
         console.error('Error Create:', error);
@@ -67,7 +67,7 @@ const runJob = async (port, name) => {
         // create
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
-                await create(page, name + i).catch();
+                await create(page, name + i).catch((err) => console.error('Error creating:', err));
             }
         }
 

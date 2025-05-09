@@ -46,12 +46,21 @@ const runTerminal = (port, name) => {
 }
 
 const main = async () => {
-    const profilePath = path.join(__dirname, 'profile');
-    const fileList = readDirectory(profilePath);
-    console.log(fileList);
-    for (const element of fileList) {
-        const name = element[element.length - 1];
-        await runTerminal(name, 'w_' + name).catch(console.error);
+    try {
+        const profilePath = path.join(__dirname, 'profile');
+        const fileList = readDirectory(profilePath);
+        console.log(fileList);
+        for (const element of fileList) {
+            try {
+                const name = element[element.length - 1];
+                await runTerminal(name, 'w_' + name)
+            } catch (error) {
+                console.error('Error in runTerminal:', error);
+            }
+        }
+    }
+    catch (error) {
+        console.error('Error in main:', error);
     }
     setTimeout(() => {
         main();
