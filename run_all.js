@@ -1,46 +1,46 @@
-const { combineOpenReset } = require('./run');
-const { exec } = require('child_process');
 
-const runProcessPro = (command) => {
-    return new Promise((res, rej) => {
-        exec(command, (error) => {
-            if (error) {
-                console.error(`___________________Error: ${command} ${error.message}`);
-                rej(error);
-            } else {
-                console.error(`___________________SS: ${command}`);
-                res();
-            }
-        });
-    })
-}
+const { fork } = require('child_process');
 
-
-const runProcess = (command) => {
-    exec(command, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`___________________Error: ${error.message}`);
-            setTimeout(() => {
-                console.log('_________________Retrying command:', command);
-                runProcess(command);
-            }, 1000 * 60 * 10);
-        }
-        setTimeout(() => {
-            console.log('_________________Retrying command:', command);
-            runProcess(command);
-        }, 1000 * 60 * 40);
-        if (stderr) {
-            console.error(`__________________stderr: ${stderr}`);
-        }
-        if (stdout) {
-            console.log(`__________________stdout: ${stdout}`);
-        }
-    });
-}
+// const runProcessPro = (command) => {
+//     return new Promise((res, rej) => {
+//         exec(command, (error) => {
+//             if (error) {
+//                 console.error(`___________________Error: ${command} ${error.message}`);
+//                 rej(error);
+//             } else {
+//                 console.error(`___________________SS: ${command}`);
+//                 res();
+//             }
+//         });
+//     })
+// }
 
 
-const fs = require('fs');
-const path = require('path');
+// const runProcess = (command) => {
+//     exec(command, (error, stdout, stderr) => {
+//         if (error) {
+//             console.error(`___________________Error: ${error.message}`);
+//             setTimeout(() => {
+//                 console.log('_________________Retrying command:', command);
+//                 runProcess(command);
+//             }, 1000 * 60 * 10);
+//         }
+//         setTimeout(() => {
+//             console.log('_________________Retrying command:', command);
+//             runProcess(command);
+//         }, 1000 * 60 * 40);
+//         if (stderr) {
+//             console.error(`__________________stderr: ${stderr}`);
+//         }
+//         if (stdout) {
+//             console.log(`__________________stdout: ${stdout}`);
+//         }
+//     });
+// }
+
+
+// const fs = require('fs');
+// const path = require('path');
 
 function readDirectory(directoryPath) {
     console.log(`Reading files in: ${directoryPath}\n`);
@@ -67,28 +67,32 @@ function readDirectory(directoryPath) {
     }
 }
 
+const runTerminal = (port, name) => {
+    return new Promise((res, rej) => {
+        const child = fork('./run.js', [port, name]);
+        child.on('close', (code) => {
+            console.log(`close_________ ${code}`);
+        });
+        child.on('exit', (code) => {
+            console.log(`exit__________ ${code}`);
+        });
+        child.on('message', (code) => {
+            console.log(`message ${code}`);
+        });
+    });
+
+}
+
 const main = async () => {
     const profilePath = path.join(__dirname, 'profile');
     const fileList = readDirectory(profilePath);
     console.log(fileList);
     for (const element of fileList) {
         const name = element[element.length - 1];
-        setTimeout(() => {
-            console.log(`node run.js ${name} w_${name}`);
-            runProcess(`node run.js ${name} w_${name}`)
-        }, 1000 * 60 * 20 * (name-1));
-
-        // console.log(`runProcess: w_${name}`);
-        // await combineOpenReset(name, `w_${name}`);
-        // console.log(`doneProcess: w_${name}`);
-
-        // await runProcessPro(`node run.js ${name} w_${name}`)
-        // await runProcessPro(`yarn m${name}`)
+        await runTerminal(name, 'w_' + name).catch(console.error);
     }
-    // for (let i = 1; i < 5; i++) {
-    //     setTimeout(() => {
-    //         runProcess(`node run.js ${i} w_${i}`)
-    //     }, 1000 * i);
-    // }
+    setTimeout(() => {
+        main();
+    }, 1000 * 60 * 30);
 }
 main()

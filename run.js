@@ -7,6 +7,7 @@ const {
 } = require('./lib');
 
 const count = process.argv[2] ? parseInt(process.argv[2], 10) : 1;
+console.log('_____________________________count:', count);
 const port = parseInt((9220 + count), 10);
 const name = process.argv[3] ? process.argv[3] : 'm1_';
 
@@ -102,7 +103,8 @@ const combineOpenReset = async (port, name) => {
 }
 const main = async (port, name) => {
     console.log('_____________________________Starting process with port:', port);
-    combineOpenReset(port, name);
+    await combineOpenReset(port, name);
+    process.send('done');
     // setInterval(() => {
     //     combineOpenReset(port, name);
     // }, 1000 * 60 * 60);

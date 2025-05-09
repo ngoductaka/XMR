@@ -203,21 +203,16 @@ const runRestartScript = (script) => {
     });
 }
 const openChrome = async (port, profile) => {
-    // For macOS, no need for escape sequences in the variable itself
-    // const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-
-    // // When passing to exec, properly escape spaces and quotes
-    // const remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir=./profile/${profile}`;
-
-
-    // Windows path to Chrome
-    const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-     // or 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
-    const path = require('path');
-    const profilePath = path.resolve( __dirname, 'profile', profile);
-
-    const remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}"`;
-    console.log('remoteDebugCmd:', remoteDebugCmd);
+    let remoteDebugCmd = ''
+    if (process.platform === 'win32') {
+        const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+        const path = require('path');
+        const profilePath = path.resolve(__dirname, 'profile', profile);
+        remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}"`;
+    } else {
+        const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+        remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir=./profile/${profile}`;
+    }
     return new Promise((resolve, reject) => {
         console.log('Executing:', remoteDebugCmd);
         exec(remoteDebugCmd, (error) => {
@@ -376,14 +371,16 @@ const closeAllTabs = async (browser, saveOne = false) => {
         all.reverse();
         const [first, ...pages] = all;
         console.log(`Closing ${pages.length} tabs...`);
-        if (!saveOne) {
+        if (!saveOne && first) {
             await first.close().catch();
         }
-        // Close each page
-        for (const page of pages) {
-            await page.close().catch(err => {
-                console.log(`Error closing tab: ${err.message}`);
-            });
+        if (pages && pages.length > 0) {
+            // Close each page
+            for (const page of pages) {
+                await page.close().catch(err => {
+                    console.log(`Error closing tab: ${err.message}`);
+                });
+            }
         }
 
         console.log('All tabs closed successfully');
