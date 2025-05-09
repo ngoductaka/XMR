@@ -56,36 +56,61 @@ const create = async (page, name) => {
         await page.close();
     } catch (error) {
         console.error('Error Create:', error);
-        return 1;
+        throw error;
     }
 }
 
-const runJob = async (port) => {
-    const { browser, page, mainTargetLinks } = await openOldConnection(port);
-    if (mainTargetLinks.length < 10) {
-        for (let i = mainTargetLinks.length; i < 10; i++) {
-            await create(page, name + i).catch(() => create(page, name + i).catch());
+const runJob = async (port, name) => {
+    try {
+        const { browser, page, mainTargetLinks } = await openOldConnection(port);
+        // create
+        if (mainTargetLinks.length < 10) {
+            for (let i = mainTargetLinks.length; i < 10; i++) {
+                await create(page, name + i).catch();
+            }
         }
+        // reset
+        mainTargetLinks.reverse();
+        for (const link of mainTargetLinks) {
+            console.log('open link:', link.href);
+            await page.goto(link.href);
+            await new Promise(resolve => setTimeout(resolve, 10 * 1000));
+        }
+        page.close();
+        for (const link of mainTargetLinks) {
+            await reset(browser, link.href).catch(() => reset(browser, link.href).catch());
+        }
+        await closeAllTabs(browser)
+    } catch (error) {
+        console.error('Error in runJob:', error);
     }
-    mainTargetLinks.reverse();
-    for (const link of mainTargetLinks) {
-        await reset(browser, link.href).catch(() => reset(browser, link.href).catch());
-    }
-    closeAllTabs(browser)
 }
-const combineOpenReset = async (port) => {
-    const profileName = `chrome-profile${port}`;
-    // await killChromeProcess(profileName)
-    openChrome(port, profileName)
-    setTimeout(() => {
-        console.log('Chrome opened successfully2');
-        runJob(port);
-    }, 2000);
+const combineOpenReset = async (port, name) => {
+    return new Promise((resolve, reject) => {
+        const profileName = `chrome-profile${port}`;
+        // await killChromeProcess(profileName)
+        openChrome(port, profileName)
+        setTimeout(() => {
+            console.log('_____________________________combineOpenReset with port:', port);
+            runJob(port, name).finally(() => {
+                reject();
+            })
+        }, 2000);
+    });
 }
-const main = async (port) => {
-    combineOpenReset(port);
-    setInterval(() => {
-        combineOpenReset(port);
-    }, 1000 * 60 * 60);
+const main = async (port, name) => {
+    console.log('_____________________________Starting process with port:', port);
+    combineOpenReset(port, name);
+    // setInterval(() => {
+    //     combineOpenReset(port, name);
+    // }, 1000 * 60 * 60);
 }
-main(port);
+main(port, name);
+
+module.exports = {
+    runJob,
+    reset,
+    create,
+    combineOpenReset
+}
+//     // }
