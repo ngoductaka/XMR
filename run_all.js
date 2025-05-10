@@ -45,15 +45,22 @@ const runTerminal = (port, name) => {
 
 }
 
-const main = async () => {
+const main = async (machine, reverse) => {
     try {
+        console.log('_____________________________start', machine, reverse);
         const profilePath = path.join(__dirname, 'profile');
         const fileList = readDirectory(profilePath);
+        if (reverse) {
+            fileList.reverse();
+        }
         console.log(fileList);
         for (const element of fileList) {
             try {
-                const name = element[element.length - 1];
-                await runTerminal(name, 'w_' + name)
+                // const name = element[element.length - 1];
+                const name = element.slice(-4);
+                const count = +name - 9220;
+                console.log('_____________________________count:', count);
+                await runTerminal(count, `${machine}${count}_`)
             } catch (error) {
                 console.error('Error in runTerminal:', error);
             }
@@ -63,7 +70,11 @@ const main = async () => {
         console.error('Error in main:', error);
     }
     setTimeout(() => {
-        main();
-    }, 1000 * 60 * 30);
+        console.log('_____________________________restart');
+        main(machine, reverse);
+    }, 1000);
 }
-main()
+
+const machine = process.argv[2] || 'w';
+const reverse = process.argv[3] ? true : false;
+main(machine, reverse)

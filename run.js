@@ -7,9 +7,9 @@ const {
 } = require('./lib');
 
 const count = process.argv[2] ? parseInt(process.argv[2], 10) : 1;
-console.log('_____________________________count:', count);
+// console.log('_____________________________count:', count);
 const port = parseInt((9220 + count), 10);
-const name = process.argv[3] ? process.argv[3] : 'm1_';
+const name = process.argv[3] ? process.argv[3] : 'e-';
 
 // Validate port is a number and in valid range
 if (isNaN(port) || port < 1024 || port > 65535) {
@@ -71,7 +71,7 @@ const runJob = async (port, name) => {
             }
         }
 
-        // await closeAllTabs(browser, true)
+        await closeAllTabs(browser, true)
         // reset
         mainTargetLinks.reverse();
         for (const link of mainTargetLinks) {
