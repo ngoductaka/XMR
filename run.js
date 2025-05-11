@@ -99,7 +99,7 @@ const runJob = async (port, name) => {
         // Error opening workspace: We've detected suspicious activity on one of your workspaces. Please contact 
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
-                await create(page, name + i).catch((err) => console.error('Error creating:', err));
+                await create(page, `${name}_${i}_`).catch((err) => console.error('Error creating:', err));
             }
         }
 
