@@ -3,8 +3,12 @@ const {
     openChrome,
     openOldConnection,
     resetWithLink,
-    closeAllTabs
+    closeAllTabs,
+    sendTelegramMessage,
 } = require('./lib');
+// Define your bot token and chat ID
+const TELEGRAM_BOT_TOKEN = '7668129713:AAGGfomtEre-W2QH0r1FUPL1Z9pKSd0KMlQ';
+const TELEGRAM_CHAT_ID = '1140704410';  
 
 const count = process.argv[2] ? parseInt(process.argv[2], 10) : 1;
 // console.log('_____________________________count:', count);
@@ -60,11 +64,33 @@ const create = async (page, name) => {
         throw error;
     }
 }
+const checkDie = async (page) => {
+    // Extract error message content from the error section
+    const errorMessage = await page.evaluate(() => {
+        const errorSection = document.querySelector('.error-section.callout.severity-error.is-loud');
+        if (errorSection) {
+            const pTag = errorSection.querySelector('p');
+            return pTag ? pTag.textContent : null;
+        }
+        return null;
+    });
 
+    if (errorMessage) {
+        console.log('Error message:', errorMessage);
+        
+        await sendTelegramMessage(
+            TELEGRAM_BOT_TOKEN,
+            TELEGRAM_CHAT_ID,
+            `⚠️ Error detected: ${errorMessage}`
+        );
+        return true;
+    }
+}
 const runJob = async (port, name) => {
     try {
         const { browser, page, mainTargetLinks } = await openOldConnection(port);
         // create
+        // Error opening workspace: We've detected suspicious activity on one of your workspaces. Please contact 
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
                 await create(page, name + i).catch((err) => console.error('Error creating:', err));
@@ -78,6 +104,12 @@ const runJob = async (port, name) => {
             console.log('open link:', link.href);
             await page.goto(link.href);
             await new Promise(resolve => setTimeout(resolve, 10 * 1000));
+            const isDie = await checkDie(page);
+            if (isDie) {
+                await closeAllTabs(browser)
+                console.log('isDie:', isDie);
+                throw new Error('isDie');
+            }
         }
         page.close();
         for (const link of mainTargetLinks) {

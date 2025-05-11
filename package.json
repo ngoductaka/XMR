@@ -5,40 +5,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node run_all.js",
-    "m1": "node run.js 1 w_1",
-    "m2": "node run.js 2 w_2",
-    "m3": "node run.js 3 w_3",
-    "m4": "node run.js 4 w_4",
-    "m5": "node run.js 5 w_5",
-    "m6": "node run.js 6 w_6",
-    "m7": "node run.js 7 w_7",
-    "m8": "node run.js 8 w_8",
-    "m9": "node run.js 9 w_9",
-    "m10": "node run.js 10 w_10",
-    "m11": "node run.js 11 w_11",
-    "m12": "node run.js 12 w_12",
-    "m13": "node run.js 13 w_13",
-    "m14": "node run.js 14 w_14",
-    "m15": "node run.js 15 w_15",
-    "m16": "node run.js 16 w_16",
-    "m17": "node run.js 17 w_17",
-    "m18": "node run.js 18 w_18",
-    "m19": "node run.js 19 w_19",
-    "m20": "node run.js 20 w_20",
-    "m21": "node run.js 21 w_21",
-    "m22": "node run.js 22 w_22",
-    "m23": "node run.js 23 w_23",
-    "m24": "node run.js 24 w_24",
-    "m25": "node run.js 25 w_25",
-    "m26": "node run.js 26 w_26",
-    "m27": "node run.js 27 w_27",
-    "m28": "node run.js 28 w_28",
-    "m29": "node run.js 29 w_29"
+    "dev": "node run.js"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "axios": "^1.9.0",
     "puppeteer": "^24.8.0"
   }
 }
