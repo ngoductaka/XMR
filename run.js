@@ -8,7 +8,7 @@ const {
 } = require('./lib');
 // Define your bot token and chat ID
 const TELEGRAM_BOT_TOKEN = '7668129713:AAGGfomtEre-W2QH0r1FUPL1Z9pKSd0KMlQ';
-const TELEGRAM_CHAT_ID = '1140704410';  
+const TELEGRAM_CHAT_ID = '1140704410';
 
 const count = process.argv[3] ? parseInt(process.argv[3], 10) : 1;
 // console.log('_____________________________count:', count);
@@ -66,27 +66,24 @@ const create = async (page, name) => {
 }
 const checkDie = async (page, port, name) => {
     try {
+        const errorMessage = await page.evaluate(() => {
+            const errorSection = document.querySelector('.error-section.callout.severity-error.is-loud');
+            if (errorSection) {
+                const pTag = errorSection.querySelector('p');
+                return pTag ? pTag.textContent : null;
+            }
+            return null;
+        });
 
-    // Extract error message content from the error section
-    const errorMessage = await page.evaluate(() => {
-        const errorSection = document.querySelector('.error-section.callout.severity-error.is-loud');
-        if (errorSection) {
-            const pTag = errorSection.querySelector('p');
-            return pTag ? pTag.textContent : null;
+        if (errorMessage) {
+            console.log('Error message:', errorMessage);
+            await sendTelegramMessage(
+                TELEGRAM_BOT_TOKEN,
+                TELEGRAM_CHAT_ID,
+                `Máy #_${name}_# số ${+port - 9220} ⚠️ Error detected: ${errorMessage}`
+            );
+            return true;
         }
-        return null;
-    });
-
-    if (errorMessage) {
-        console.log('Error message:', errorMessage);
-        
-        await sendTelegramMessage(
-            TELEGRAM_BOT_TOKEN,
-            TELEGRAM_CHAT_ID,
-            `Máy #_${name}_# số ${+port - 9220} ⚠️ Error detected: ${errorMessage}`
-        );
-        return true;
-    }
     } catch (error) {
         console.error('Error in checkDie:', error);
         return null
@@ -99,7 +96,11 @@ const runJob = async (port, name) => {
         // Error opening workspace: We've detected suspicious activity on one of your workspaces. Please contact 
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
-                await create(page, `${name}_${i}_`).catch((err) => console.error('Error creating:', err));
+                try {
+                    await create(page, `${name}_${i}_`).catch((err) => console.error('Error creating:', err));
+                } catch (error) {
+                    console.error('Error in create:', error);
+                }
             }
         }
 
@@ -117,7 +118,7 @@ const runJob = async (port, name) => {
                 throw new Error('isDie');
             }
         }
-        page.close();
+        // page.close();
         for (const link of mainTargetLinks) {
             await reset(browser, link.href).catch(() => reset(browser, link.href).catch());
         }
