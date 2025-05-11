@@ -29,10 +29,10 @@ function readDirectory(directoryPath) {
     }
 }
 
-const runTerminal = (port, name) => {
+const runTerminal = (name, port) => {
     return new Promise((res, rej) => {
 
-        const child = fork('./run.js', [port, name]);
+        const child = fork('./run.js', [name, port]);
         child.on('close', (code) => {
             console.log(`close_________ ${code}`);
             rej();
@@ -63,7 +63,7 @@ const main = async (machine, reverse) => {
                 const name = element.slice(-4);
                 const count = +name - 9220;
                 console.log('_____________________________count:', count);
-                await runTerminal(count, `${machine}${count}_`)
+                await runTerminal(`${machine}${count}_`, count)
                 await killChromeProcess().catch(console.error);
             } catch (error) {
                 console.error('Error in runTerminal:', error);

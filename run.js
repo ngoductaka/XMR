@@ -10,10 +10,10 @@ const {
 const TELEGRAM_BOT_TOKEN = '7668129713:AAGGfomtEre-W2QH0r1FUPL1Z9pKSd0KMlQ';
 const TELEGRAM_CHAT_ID = '1140704410';  
 
-const count = process.argv[2] ? parseInt(process.argv[2], 10) : 1;
+const count = process.argv[3] ? parseInt(process.argv[3], 10) : 1;
 // console.log('_____________________________count:', count);
 const port = parseInt((9220 + count), 10);
-const name = process.argv[3] ? process.argv[3] : 'e-';
+const name = process.argv[2] ? process.argv[2] : 'e-';
 
 // Validate port is a number and in valid range
 if (isNaN(port) || port < 1024 || port > 65535) {
@@ -64,7 +64,9 @@ const create = async (page, name) => {
         throw error;
     }
 }
-const checkDie = async (page) => {
+const checkDie = async (page, port, name) => {
+    try {
+
     // Extract error message content from the error section
     const errorMessage = await page.evaluate(() => {
         const errorSection = document.querySelector('.error-section.callout.severity-error.is-loud');
@@ -81,9 +83,13 @@ const checkDie = async (page) => {
         await sendTelegramMessage(
             TELEGRAM_BOT_TOKEN,
             TELEGRAM_CHAT_ID,
-            `⚠️ Error detected: ${errorMessage}`
+            `Máy #_${name}_# số ${+port - 9220} ⚠️ Error detected: ${errorMessage}`
         );
         return true;
+    }
+    } catch (error) {
+        console.error('Error in checkDie:', error);
+        return null
     }
 }
 const runJob = async (port, name) => {
@@ -104,7 +110,7 @@ const runJob = async (port, name) => {
             console.log('open link:', link.href);
             await page.goto(link.href);
             await new Promise(resolve => setTimeout(resolve, 10 * 1000));
-            const isDie = await checkDie(page);
+            const isDie = await checkDie(page, port, name);
             if (isDie) {
                 await closeAllTabs(browser)
                 console.log('isDie:', isDie);
