@@ -47,24 +47,22 @@ const runTerminal = (name, port) => {
 
 }
 
-const main = async (machine, reverse) => {
+const main = async (machine, ignore) => {
     try {
         await killChromeProcess().catch(console.error);
-        console.log('_____________________________start', machine, reverse);
+        console.log('_____________________________start', machine, ignore);
         const profilePath = path.join(__dirname, 'profile');
         const fileList = readDirectory(profilePath);
-        if (reverse) {
-            fileList.reverse();
-        }
-        console.log(fileList);
+        const ignoreList = ignore ? ignore.split(',') : [];
         for (const element of fileList) {
             try {
-                // const name = element[element.length - 1];
                 const name = element.slice(-4);
                 const count = +name - 9220;
-                console.log('_____________________________count:', count);
+                if(ignoreList.includes(count+'')) {
+                    console.log('ignore:', count);
+                    continue;
+                }
                 await runTerminal(`${machine}${count}_`, count)
-                await killChromeProcess().catch(console.error);
             } catch (error) {
                 console.error('Error in runTerminal:', error);
             }
@@ -75,10 +73,10 @@ const main = async (machine, reverse) => {
     }
     setTimeout(() => {
         console.log('_____________________________restart');
-        main(machine, reverse);
-    }, 1000);
+        main(machine, ignore);
+    }, 10 * 1000);
 }
 
 const machine = process.argv[2] || 'w';
-const reverse = process.argv[3] ? true : false;
-main(machine, reverse)
+const ignore = process.argv[3];
+main(machine, ignore)
