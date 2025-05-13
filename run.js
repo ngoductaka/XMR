@@ -61,7 +61,7 @@ const create = async (page, name) => {
         await page.close();
     } catch (error) {
         console.error('Error Create:', error);
-        throw error;
+        throw Error(error);
     }
 }
 const checkDie = async (page, port, name) => {
@@ -96,11 +96,7 @@ const runJob = async (port, name) => {
         // Error opening workspace: We've detected suspicious activity on one of your workspaces. Please contact 
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
-                try {
-                    await create(page, `${name}_${i}_`).catch((err) => console.error('Error creating:', err));
-                } catch (error) {
-                    console.error('Error in create:', error);
-                }
+                await create(page, `${name}_${i}_`);
             }
         }
 
