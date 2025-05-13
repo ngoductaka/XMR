@@ -8,7 +8,8 @@ const {
 } = require('./lib');
 // Define your bot token and chat ID
 const TELEGRAM_BOT_TOKEN = '7668129713:AAGGfomtEre-W2QH0r1FUPL1Z9pKSd0KMlQ';
-const TELEGRAM_CHAT_ID = '1140704410';
+// const TELEGRAM_CHAT_ID = '1140704410';
+const TELEGRAM_CHAT_ID = '-4750007696'; // group chat id
 
 const count = process.argv[3] ? parseInt(process.argv[3], 10) : 1;
 const port = parseInt((9220 + count), 10);
