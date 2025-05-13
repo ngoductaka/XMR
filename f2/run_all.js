@@ -58,7 +58,7 @@ const main = async (machine, ignore = '') => {
             try {
                 const name = element.slice(-4);
                 const count = +name - 9220;
-                if (ignoreList.includes(count + '')) {
+                if(ignoreList.includes(count+'')) {
                     console.log('ignore:', count);
                     continue;
                 }

@@ -5,8 +5,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node run_all.js",
-    "open": "node profile.js",
-    "dev": "node run.js"
+    "dev": "node run.js",
+    "start_f2": "node f2/run_all.js",
+    "dev_f2": "node f2/run.js"
   },
   "author": "",
   "license": "ISC",

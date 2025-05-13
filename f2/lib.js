@@ -1,6 +1,7 @@
-const path = require('path');
+// monaco-dialog-modal-block
 const puppeteer = require('puppeteer');
 const { exec, fork } = require('child_process');
+const path = require('path');
 
 async function waitForClassToExist(page, classSelector, maxWaitTimeMs = 5 * 60 * 1000, checkIntervalMs = 10 * 1000) {
     console.log(`Starting to wait for class '${classSelector}' to appear...`);
@@ -209,7 +210,7 @@ const openChrome = async (port, profile) => {
         remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}"`;
     } else {
         const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-        const profilePath = path.join(__dirname, 'profile', profile);
+        const profilePath = path.resolve(__dirname, 'profile', profile);
         remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}"`;
     }
     return new Promise((resolve, reject) => {
