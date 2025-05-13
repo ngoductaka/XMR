@@ -11,7 +11,6 @@ const TELEGRAM_BOT_TOKEN = '7668129713:AAGGfomtEre-W2QH0r1FUPL1Z9pKSd0KMlQ';
 const TELEGRAM_CHAT_ID = '1140704410';
 
 const count = process.argv[3] ? parseInt(process.argv[3], 10) : 1;
-// console.log('_____________________________count:', count);
 const port = parseInt((9220 + count), 10);
 const name = process.argv[2] ? process.argv[2] : 'e-';
 

@@ -13,12 +13,8 @@ const main = async (port, name) => {
     await openProfile(port, name);
 
 }
-main(port, name);
 
-module.exports = {
-    runJob,
-    reset,
-    create,
-    combineOpenReset
-}
-//     // }
+const count = process.argv[2] ? parseInt(process.argv[2], 10) : 1;
+const port = parseInt((9220 + count), 10);
+
+main(port);
