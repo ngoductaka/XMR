@@ -47,7 +47,7 @@ const runTerminal = (name, port) => {
 
 }
 
-const main = async (machine, ignore) => {
+const main = async (machine, ignore = '') => {
     try {
         await killChromeProcess().catch(console.error);
         console.log('_____________________________start', machine, ignore);
