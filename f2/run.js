@@ -93,7 +93,7 @@ const runJob = async (port, name) => {
         const { browser, page, mainTargetLinks } = await openOldConnection(port);
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
-                await create(page, `${name}_${i}_`);
+                await create(page, `${name}-${i}-`);
             }
         }
 
