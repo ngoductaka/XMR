@@ -35,7 +35,7 @@ const runTerminal = (name, port) => {
         const child = fork(runPath, [name, port]);
         child.on('close', (code) => {
             console.log(`close_________ ${code}`);
-            rej();
+            res();
         });
         child.on('exit', (code) => {
             console.log(`exit__________ ${code}`);
