@@ -13,7 +13,9 @@
     "start_f2": "node f2/run_all.js",
     "dev_f2": "node f2/run.js",
     "start_f3": "node f3/run_all.js",
-    "dev_f3": "node f3/run.js"
+    "dev_f3": "node f3/run.js",
+    "start_f4": "node f4/run_all.js",
+    "dev_f4": "node f4/run.js"
   },
   "author": "",
   "license": "ISC",

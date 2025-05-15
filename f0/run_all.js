@@ -2,7 +2,7 @@
 const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { killChromeProcess } = require('../lib');
+const { killChromeProcess } = require('./lib');
 
 function readDirectory(directoryPath) {
     console.log(`Reading files in: ${directoryPath}\n`);
@@ -47,40 +47,50 @@ const runTerminal = (name, port) => {
 
 }
 
-const main = async (machine, ignore = '') => {
+const run = async (machine) => {
     try {
         await killChromeProcess().catch(console.error);
-        console.log('_____________________________start', machine, ignore);
         const profilePath = path.join(__dirname, 'profile');
         const fileList = readDirectory(profilePath);
-        const ignoreList = ignore ? ignore.split(',') : [];
+        // const ignoreList = ignore ? ignore.split(',') : [];
         for (const element of fileList) {
             try {
                 const name = element.slice(-4);
                 const count = +name - 9220;
-                if(ignoreList.includes(count+'')) {
-                    console.log('ignore:', count);
-                    continue;
-                }
+                // if(ignoreList.includes(count+'')) {
+                //     console.log('ignore:', count);
+                //     continue;
+                // }
                 await runTerminal(`${machine}${count}_`, count);
-                await killChromeProcess().catch(console.error);
                 await new Promise(resolve => setTimeout(resolve, 3 * 1000));
+                await killChromeProcess().catch(console.error);
             } catch (error) {
                 console.error('Error in runTerminal:', error);
-                await killChromeProcess().catch(console.error);
-                await new Promise(resolve => setTimeout(resolve, 3 * 1000));
             }
         }
     }
     catch (error) {
         console.error('Error in main:', error);
     }
+}
+
+const main = async (machine, runInRangeTime = '') => {
+    var now = new Date();
+    var hour = now.getHours();
+    console.log('_____________________________start', machine, runInRangeTime);
+    if (runInRangeTime) {
+        if (hour >= 0 && hour < 9) {
+            await run(machine, runInRangeTime);
+        }
+    } else {
+        await run(machine, runInRangeTime);
+    }
     setTimeout(() => {
         console.log('_____________________________restart');
-        main(machine, ignore);
-    }, 10 * 1000);
+        main(machine, runInRangeTime);
+    }, 60 * 1000);
 }
 
 const machine = process.argv[2] || 'w';
-const ignore = process.argv[3];
-main(machine, ignore)
+const runInRangeTime = process.argv[3];
+main(machine, runInRangeTime)
