@@ -2,7 +2,7 @@
 const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { killChromeProcess } = require('./lib');
+const { killChromeProcess } = require('../lib');
 
 function readDirectory(directoryPath) {
     console.log(`Reading files in: ${directoryPath}\n`);
@@ -35,7 +35,7 @@ const runTerminal = (name, port) => {
         const child = fork(runPath, [name, port]);
         child.on('close', (code) => {
             console.log(`close_________ ${code}`);
-            res();
+            rej();
         });
         child.on('exit', (code) => {
             console.log(`exit__________ ${code}`);
@@ -58,15 +58,17 @@ const main = async (machine, ignore = '') => {
             try {
                 const name = element.slice(-4);
                 const count = +name - 9220;
-                if (ignoreList.includes(count + '')) {
+                if(ignoreList.includes(count+'')) {
                     console.log('ignore:', count);
                     continue;
                 }
                 await runTerminal(`${machine}${count}_`, count);
-                await new Promise(resolve => setTimeout(resolve, 3 * 1000));
                 await killChromeProcess().catch(console.error);
+                await new Promise(resolve => setTimeout(resolve, 3 * 1000));
             } catch (error) {
                 console.error('Error in runTerminal:', error);
+                await killChromeProcess().catch(console.error);
+                await new Promise(resolve => setTimeout(resolve, 3 * 1000));
             }
         }
     }

@@ -4,10 +4,14 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node run_all.js",
-    "dev": "node run.js",
+    "start": "node f0/run_all.js",
+    "dev": "node f0/run.js",
+    "start_f1": "node f1/run_all.js",
+    "dev_f1": "node f1/run.js",
     "start_f2": "node f2/run_all.js",
-    "dev_f2": "node f2/run.js"
+    "dev_f2": "node f2/run.js",
+    "start_f3": "node f3/run_all.js",
+    "dev_f3": "node f3/run.js"
   },
   "author": "",
   "license": "ISC",

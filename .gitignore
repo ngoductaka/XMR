@@ -2,4 +2,7 @@ node_modules
 dist
 coverage
 profile/*
+f1/profile/*
 f2/profile/*
+f3/profile/*
+f0/profile/*

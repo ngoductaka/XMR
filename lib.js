@@ -1,6 +1,5 @@
-const path = require('path');
 const puppeteer = require('puppeteer');
-const { exec, fork } = require('child_process');
+const { exec } = require('child_process');
 
 async function waitForClassToExist(page, classSelector, maxWaitTimeMs = 5 * 60 * 1000, checkIntervalMs = 10 * 1000) {
     console.log(`Starting to wait for class '${classSelector}' to appear...`);
@@ -201,15 +200,15 @@ const runRestartScript = (script) => {
         });
     });
 }
-const openChrome = async (port, profile) => {
+const openChrome = async (port, profilePath) => {
     let remoteDebugCmd = ''
     if (process.platform === 'win32') {
         const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-        const profilePath = path.resolve(__dirname, 'profile', profile);
+        // const profilePath = path.resolve(__dirname, 'profile', profile);
         remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}"`;
     } else {
         const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-        const profilePath = path.join(__dirname, 'profile', profile);
+        // const profilePath = path.join(__dirname, 'profile', profile);
         remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}"`;
     }
     return new Promise((resolve, reject) => {
@@ -399,6 +398,127 @@ async function sendTelegramMessage(botToken, chatId, message) {
         return false;
     }
 }
+
+// =====================================
+// run.js
+
+// Define your bot token and chat ID
+const TELEGRAM_BOT_TOKEN = '7668129713:AAGGfomtEre-W2QH0r1FUPL1Z9pKSd0KMlQ';
+// const TELEGRAM_CHAT_ID = '1140704410';
+const TELEGRAM_CHAT_ID = '-4750007696'; // group chat id
+
+const reset = async (browser, link) => {
+    try {
+        const location = link.split('/');
+        const workerName = location[location.length - 1];
+        const page = await browser.newPage();
+
+        await page.goto(link);
+        await page.waitForSelector('iframe.is-loaded', { timeout: 8 * 60 * 1000 });
+
+        const iframeSrc = await page.evaluate(() => {
+            const iframe = document.querySelector('iframe.is-loaded');
+            return iframe ? iframe.src : null;
+        });
+        console.log('open workerName:', workerName);
+        await resetWithLink(page, iframeSrc, workerName).catch(async (err) => {
+            console.error('Error resetting with link::________________dnd____', err);
+            await resetWithLink(page, iframeSrc, workerName).catch()
+        });
+        console.log(workerName + 'done and closing page in 10 seconds');
+        setTimeout(async () => {
+            await page.close();
+            console.log(workerName + '_________closed___');
+        }, 10 * 1000);
+    } catch (error) {
+        console.error('Error killing Chrome:', error);
+    }
+}
+
+const create = async (page, name) => {
+    try {
+        await page.goto('https://idx.google.com/new/react-native');
+        await page.waitForSelector('#mat-input-0');
+        await page.type('#mat-input-0', name);
+        await page.keyboard.press('Enter');
+        await page.waitForSelector('iframe.is-loaded', { timeout: 30 * 1000 });
+        await page.close();
+    } catch (error) {
+        console.error('Error Create:', error);
+        throw new Error('Error Create:', error);
+    }
+}
+const checkDie = async (page, port, name) => {
+    try {
+        const errorMessage = await page.evaluate(() => {
+            const errorSection = document.querySelector('.error-section.callout.severity-error.is-loud');
+            if (errorSection) {
+                const pTag = errorSection.querySelector('p');
+                return pTag ? pTag.textContent : null;
+            }
+            return null;
+        });
+
+        if (errorMessage) {
+            console.log('Error message:', errorMessage);
+            
+            await sendTelegramMessage(
+                TELEGRAM_BOT_TOKEN,
+                TELEGRAM_CHAT_ID,
+                `Máy #_${name}_# số ${+port - 9220} ⚠️ Error detected: ${errorMessage}`
+            );
+            return true;
+        }
+    } catch (error) {
+        console.error('Error in checkDie:', error);
+        return null
+    }
+}
+const runJob = async (port, name) => {
+    try {
+        const { browser, page, mainTargetLinks } = await openOldConnection(port);
+        if (mainTargetLinks.length < 10) {
+            for (let i = mainTargetLinks.length; i < 10; i++) {
+                await create(page, `${name}-${i}-`);
+            }
+        }
+
+        await closeAllTabs(browser, true)
+        // reset
+        mainTargetLinks.reverse();
+        for (const link of mainTargetLinks) {
+            console.log('open link:', link.href);
+            await page.goto(link.href);
+            await new Promise(resolve => setTimeout(resolve, 10 * 1000));
+            const isDie = await checkDie(page, port, name);
+            if (isDie) {
+                await closeAllTabs(browser)
+                console.log('isDie:', isDie);
+                throw new Error('isDie');
+            }
+        }
+        // page.close();
+        for (const link of mainTargetLinks) {
+            await reset(browser, link.href).catch(() => reset(browser, link.href).catch());
+        }
+        await closeAllTabs(browser)
+    } catch (error) {
+        console.error('Error in runJob:', error);
+        throw new Error(error);
+    }
+}
+const combineOpenReset = async (port, name, profilePath) => {
+    return new Promise((resolve, reject) => {
+        openChrome(port, profilePath)
+        setTimeout(() => {
+            console.log('_____________________________combineOpenReset with port:', port);
+            runJob(port, name).finally(() => {
+                reject();
+            })
+        }, 2000);
+    });
+}
+
 module.exports = {
     openChrome,
     initConnection,
@@ -410,5 +530,6 @@ module.exports = {
     resetWithLink,
     killChromeProcess,
     sendTelegramMessage,
-    closeAllTabs
+    closeAllTabs,
+    combineOpenReset,
 }
