@@ -528,7 +528,7 @@ const combineOpenReset = async (port, name, profilePath) => {
         setTimeout(() => {
             console.log('_____________________________combineOpenReset with port:', port);
             runJob(port, name).finally(() => {
-                reject();
+                resolve();
             })
         }, 2000);
     });
