@@ -4,8 +4,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node f0/run_all.js",
-    "dev": "node f0/run.js",
+    "start": "node run_all.js",
+    "dev": "node run.js",
+    "start_f0": "node f0/run_all.js",
+    "dev_f0": "node f0/run.js",
     "start_f1": "node f1/run_all.js",
     "dev_f1": "node f1/run.js",
     "start_f2": "node f2/run_all.js",
