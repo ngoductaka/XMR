@@ -79,7 +79,7 @@ const main = async (machine, runInRangeTime = '') => {
     var hour = now.getHours();
     console.log('_____________________________start', machine, runInRangeTime);
     if (runInRangeTime) {
-        if (hour >= 9 && hour < 16) {
+        if (hour >= 13 && hour < 24) {
             await run(machine, runInRangeTime);
         }
     } else {
