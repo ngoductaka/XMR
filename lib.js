@@ -1,6 +1,8 @@
 const puppeteer = require('puppeteer');
 const { exec } = require('child_process');
 
+const wait = (min, maxPlus) => new Promise(resolve => setTimeout(resolve, (min + maxPlus * Math.random()) * 1000))
+
 async function waitForClassToExist(page, classSelector, maxWaitTimeMs = 5 * 60 * 1000, checkIntervalMs = 10 * 1000) {
     console.log(`Starting to wait for class '${classSelector}' to appear...`);
     const startTime = Date.now();
@@ -289,7 +291,7 @@ const runCMD1 = async (page, name) => {
 
 const resetWithLink = async (page, link, name) => {
     await page.goto(link);
-    await new Promise(resolve => setTimeout(resolve, 3 * 1000));
+    await wait(2, 3);//new Promise(resolve => setTimeout(resolve, (2 + 3 * Math.random()) * 1000));
     await page.waitForSelector('.menubar-menu-button', { timeout: 50000 });
     await page.waitForSelector('.monaco-highlighted-label', { timeout: 100 * 1000 });
     //  clear the terminal
@@ -450,9 +452,12 @@ const create = async (page, name) => {
 }
 const checkDie = async (page, port, name) => {
     try {
+        console.log('Checking for errors... die');
+        await page.waitForSelector('.error-section.callout.severity-error.is-loud', { timeout: 10 * 1000 });
         const errorMessage = await page.evaluate(() => {
             const errorSection = document.querySelector('.error-section.callout.severity-error.is-loud');
             if (errorSection) {
+                console.log('Error section found:');
                 const pTag = errorSection.querySelector('p');
                 return pTag ? pTag.textContent : null;
             }
@@ -461,7 +466,6 @@ const checkDie = async (page, port, name) => {
 
         if (errorMessage) {
             console.log('Error message:', errorMessage);
-            
             await sendTelegramMessage(
                 TELEGRAM_BOT_TOKEN,
                 TELEGRAM_CHAT_ID,
@@ -486,18 +490,29 @@ const runJob = async (port, name) => {
         await closeAllTabs(browser, true)
         // reset
         mainTargetLinks.reverse();
-        for (const link of mainTargetLinks) {
-            console.log('open link:', link.href);
-            await page.goto(link.href);
-            await new Promise(resolve => setTimeout(resolve, 10 * 1000));
-            const isDie = await checkDie(page, port, name);
-            if (isDie) {
-                await closeAllTabs(browser)
-                console.log('isDie:', isDie);
-                throw new Error('isDie');
-            }
-        }
+        // open link for what ?
+        // for (const link of mainTargetLinks) {
+        //     console.log('open link:', link.href);
+        //     await page.goto(link.href);
+        //     await new Promise(resolve => setTimeout(resolve, 10 * 1000));
+        //     const isDie = await checkDie(page, port, name);
+        //     if (isDie) {
+        //         await closeAllTabs(browser)
+        //         console.log('isDie:', isDie);
+        //         throw new Error('isDie');
+        //     }
+        // }
         // page.close();
+        console.log('open link: check die');
+        const link = mainTargetLinks[0];
+        await page.goto(link.href);
+        const isDie = await checkDie(page, port, name);
+        if (isDie) {
+            await closeAllTabs(browser)
+            console.log('isDie:', isDie);
+            throw new Error('isDie');
+        }
+        await page.close();
         for (const link of mainTargetLinks) {
             await reset(browser, link.href).catch(() => reset(browser, link.href).catch());
         }
