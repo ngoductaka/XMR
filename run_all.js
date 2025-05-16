@@ -66,8 +66,6 @@ const run = async (machine) => {
                 await new Promise(resolve => setTimeout(resolve, 3 * 1000));
                 await killChromeProcess().catch(console.error);
             } catch (error) {
-                await new Promise(resolve => setTimeout(resolve, 3 * 1000));
-                await killChromeProcess().catch(console.error);
                 console.error('Error in runTerminal:', error);
             }
         }

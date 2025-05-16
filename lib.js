@@ -231,7 +231,7 @@ const openChrome = async (port, profilePath) => {
 const hoverOnElement = async (page, selector) => {
     try {
         // Wait for the element to be present in the DOM
-        await page.waitForSelector(selector, { timeout: 10000 });
+        await page.waitForSelector(selector, { timeout: 5 * 1000 });
 
         // Hover on the element
         await page.hover(selector);
@@ -240,7 +240,9 @@ const hoverOnElement = async (page, selector) => {
         return true;
     } catch (error) {
         console.error(`Error hovering on ${selector}: ${error.message}`);
+        throw error;
         return false;
+
     }
 };
 
@@ -293,7 +295,7 @@ const resetWithLink = async (page, link, name) => {
     await page.goto(link);
     await wait(2, 3);//new Promise(resolve => setTimeout(resolve, (2 + 3 * Math.random()) * 1000));
     await page.waitForSelector('.menubar-menu-button', { timeout: 50000 });
-    await page.waitForSelector('.monaco-highlighted-label', { timeout: 100 * 1000 });
+    await page.waitForSelector('.monaco-highlighted-label', { timeout: 10 * 1000 });
     //  clear the terminal
     for (let i = 0; i < 2; i++) {
         try {
