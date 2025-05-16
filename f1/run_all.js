@@ -61,7 +61,7 @@ const run = async (machine) => {
                 //     console.log('ignore:', count);
                 //     continue;
                 // }
-                await runTerminal(`${machine}${count}_`, count);
+                await runTerminal(`${machine}${count}`, count);
                 await new Promise(resolve => setTimeout(resolve, 3 * 1000));
                 await killChromeProcess().catch(console.error);
             } catch (error) {
