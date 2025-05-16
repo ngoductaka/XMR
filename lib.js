@@ -518,6 +518,7 @@ const runJob = async (port, name) => {
         }
         await closeAllTabs(browser)
     } catch (error) {
+        await closeAllTabs(browser)
         console.error('Error in runJob:', error);
         throw new Error(error);
     }
