@@ -58,7 +58,7 @@ const run = async (machine) => {
             try {
                 const name = element.slice(-4);
                 const count = +name - 9220;
-                await runTerminal(`${machine}`, count);
+                await runTerminal(`${machine}-p${count}`, count);
                 await new Promise(resolve => setTimeout(resolve, 3 * 1000));
                 await killChromeProcess().catch(console.error);
             } catch (error) {

@@ -461,7 +461,7 @@ const runJob = async (port, name) => {
         const { browser, page, mainTargetLinks } = await openOldConnection(port);
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
-                const result = await create(page, `${name}-${i}-`);
+                const result = await create(page, `${name}-w${i}-`);
                 if (result === 'create_fail') {
                     console.log('Error creating new page');
                     break;
