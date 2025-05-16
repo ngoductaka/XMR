@@ -58,11 +58,7 @@ const run = async (machine) => {
             try {
                 const name = element.slice(-4);
                 const count = +name - 9220;
-                // if(ignoreList.includes(count+'')) {
-                //     console.log('ignore:', count);
-                //     continue;
-                // }
-                await runTerminal(`${machine}=${count}`, count);
+                await runTerminal(`${machine}`, count);
                 await new Promise(resolve => setTimeout(resolve, 3 * 1000));
                 await killChromeProcess().catch(console.error);
             } catch (error) {
@@ -78,7 +74,7 @@ const run = async (machine) => {
 const main = async (machine, runInRangeTime = '') => {
     var now = new Date();
     var hour = now.getHours();
-    console.log('_____________________________start', machine, runInRangeTime);
+    console.log('_____________________________start', new Date().toLocaleTimeString());
     if (runInRangeTime) {
         if (hour >= 0 && hour < 12) {
             await run(machine, runInRangeTime);
@@ -87,9 +83,9 @@ const main = async (machine, runInRangeTime = '') => {
         await run(machine, runInRangeTime);
     }
     setTimeout(() => {
-        console.log('_____________________________restart');
+        console.log('_____________________________restart', new Date().toLocaleTimeString());
         main(machine, runInRangeTime);
-    }, 60 * 1000);
+    }, 5 * 1000);
 }
 
 const machine = process.argv[2] || 'w';

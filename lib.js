@@ -168,8 +168,11 @@ const openOldConnection = async (port) => {
         browserURL: 'http://localhost:' + port,
         defaultViewport: null,
     });
+    const { page, mainTargetLinks } = await openHomePageAndGetLinks(browser);
+    return { browser, page, mainTargetLinks };
+}
 
-    // Open a new tab (page)
+const openHomePageAndGetLinks = async (browser) => {
     const page = await browser.newPage();
     await page.goto('https://idx.google.com');
 
@@ -401,7 +404,7 @@ const reset = async (browser, link) => {
             await resetWithLink(page, iframeSrc, workerName).catch()
         });
         const time = (2 * Math.random()) * 60 * 1000;
-        console.log(workerName + 'done and closing page in '+ time);
+        console.log(workerName + 'done and closing page in ' + time);
         setTimeout(async () => {
             await page.close();
             console.log(workerName + '_________closed___');
@@ -417,11 +420,12 @@ const create = async (page, name) => {
         await page.waitForSelector('#mat-input-0');
         await page.type('#mat-input-0', name);
         await page.keyboard.press('Enter');
-        await page.waitForSelector('iframe.is-loaded', { timeout: 30 * 1000 });
+        await page.waitForSelector('iframe.is-loaded', { timeout: 60 * 1000 });
         await page.close();
     } catch (error) {
-        console.error('Error Create:', error);
-        throw new Error('Error Create:', error);
+        return 'create_fail';
+        // console.error('Error Create:', error);
+        // throw new Error('Error Create:', error);
     }
 }
 const checkDie = async (page, port, name) => {
@@ -457,40 +461,32 @@ const runJob = async (port, name) => {
         const { browser, page, mainTargetLinks } = await openOldConnection(port);
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
-                await create(page, `${name}-${i}-`);
+                const result = await create(page, `${name}-${i}-`);
+                if (result === 'create_fail') {
+                    console.log('Error creating new page');
+                    break;
+                }
             }
         }
 
-        await closeAllTabs(browser, true)
-        // reset
-        mainTargetLinks.reverse();
-        // open link for what ?
-        // for (const link of mainTargetLinks) {
-        //     console.log('open link:', link.href);
-        //     await page.goto(link.href);
-        //     await new Promise(resolve => setTimeout(resolve, 10 * 1000));
-        //     const isDie = await checkDie(page, port, name);
-        //     if (isDie) {
-        //         await closeAllTabs(browser)
-        //         console.log('isDie:', isDie);
-        //         throw new Error('isDie');
-        //     }
-        // }
-        // page.close();
-        console.log('open link: check die');
-        const link = mainTargetLinks[0];
-        await page.goto(link.href);
-        const isDie = await checkDie(page, port, name);
+        console.log('Error creating new page');
+
+        const {page: homePage, mainTargetLinks: listLInk} = await openHomePageAndGetLinks(browser);
+        await closeAllTabs(browser, true);
+        console.log('open link: check google fails');
+        const link = listLInk[0];
+        await homePage.goto(link.href);
+        const isDie = await checkDie(homePage, port, name);
         if (isDie) {
             await closeAllTabs(browser)
-            console.log('isDie:', isDie);
-            throw new Error('isDie');
+            console.log('google fails:', isDie);
+            throw new Error('google fails');
         }
-        await page.close();
-        for (const link of mainTargetLinks) {
+        await homePage.close();
+        for (const link of listLInk) {
             await reset(browser, link.href).catch(() => reset(browser, link.href).catch());
         }
-        await closeAllTabs(browser)
+        await closeAllTabs(browser);
     } catch (error) {
         await closeAllTabs(browser)
         console.error('Error in runJob:', error);
@@ -522,4 +518,5 @@ module.exports = {
     sendTelegramMessage,
     closeAllTabs,
     combineOpenReset,
+    openHomePageAndGetLinks,
 }
