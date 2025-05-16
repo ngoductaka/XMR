@@ -400,11 +400,12 @@ const reset = async (browser, link) => {
             console.error('Error resetting with link::________________dnd____', err);
             await resetWithLink(page, iframeSrc, workerName).catch()
         });
-        console.log(workerName + 'done and closing page in 10 seconds');
+        const time = (2 * Math.random()) * 60 * 1000;
+        console.log(workerName + 'done and closing page in '+ time);
         setTimeout(async () => {
             await page.close();
             console.log(workerName + '_________closed___');
-        }, (2 * Math.random()) * 60 * 1000);
+        }, time);
     } catch (error) {
         console.error('Error killing Chrome:', error);
     }
