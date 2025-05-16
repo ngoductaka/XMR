@@ -88,7 +88,7 @@ const main = async (machine, runInRangeTime = '') => {
     setTimeout(() => {
         console.log('_____________________________restart');
         main(machine, runInRangeTime);
-    }, 60 * 1000);
+    }, 3 * 60 * 1000);
 }
 
 const machine = process.argv[2] || 'w';
