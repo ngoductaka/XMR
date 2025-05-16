@@ -431,7 +431,7 @@ const reset = async (browser, link) => {
         setTimeout(async () => {
             await page.close();
             console.log(workerName + '_________closed___');
-        }, 10 * 1000);
+        }, (4 * Math.random() + 6) * 60 * 1000);
     } catch (error) {
         console.error('Error killing Chrome:', error);
     }
