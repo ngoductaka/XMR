@@ -1,19 +1,24 @@
+const { openChrome, runJobWithSelenium } = require('../lib');
 const path = require('path');
-const { combineOpenReset } = require('../lib');
 
 const count = process.argv[3] ? parseInt(process.argv[3], 10) : 1;
 const port = parseInt((9220 + count), 10);
-const name = process.argv[2] ? process.argv[2] : 'e-';
-if (isNaN(port) || port < 1024 || port > 65535) {
-    console.error('Please provide a valid port number between 1024 and 65535');
-    console.log('Usage: node openChrome.js [port]');
-    process.exit(1);
-}
+const name = process.argv[2] || `dnd`;
+const profilePath = path.join(__dirname, 'profile', `chrome-profile${port}`);
 
-const main = async (port, name) => {
-    console.log('_____________________________Starting process with port:', port);
-    const profilePath = path.resolve(__dirname, 'profile', `chrome-profile${port}`);
-    await combineOpenReset(port, name, profilePath);
-    process.exit('done');
+// Main execution function
+async function main() {
+    try {
+        console.log(`Starting Selenium test with port ${port} and name ${name}`);
+        openChrome(port, profilePath);
+        setTimeout(async () => {
+            console.log('Running job with Selenium...');
+            await runJobWithSelenium(port, name);
+            process.exit('done');
+        }, 2 * 1000);
+    } catch (error) {
+        console.error('Error running Selenium test:', error);
+    }
 }
-main(port, name);
+// Run the main function
+main();

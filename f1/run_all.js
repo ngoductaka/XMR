@@ -1,8 +1,9 @@
 
-const { runAllProfile } = require('../lib');
+const { runAllProfile, killChromeProcess } = require('../lib');
 const path = require('path');
 
 const main = async (machine, runInRangeTime = '') => {
+    await killChromeProcess().catch(console.error);
     var now = new Date();
     var hour = now.getHours();
     const profilePath = path.join(__dirname, 'profile');
