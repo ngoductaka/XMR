@@ -1,4 +1,7 @@
 const puppeteer = require('puppeteer');
+const { fork } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 const { exec } = require('child_process');
 
 const wait = (min, maxPlus) => new Promise(resolve => setTimeout(resolve, (min + maxPlus * Math.random()) * 1000))
@@ -341,9 +344,9 @@ const closeAllTabs = async (browser, saveOne = false) => {
                 await page.close().catch(err => {
                     console.log(`Error closing tab: ${err.message}`);
                 });
+                await page.keyboard.press('Enter');
             }
         }
-
         console.log('All tabs closed successfully');
         return true;
     } catch (error) {
@@ -424,12 +427,15 @@ const create = async (page, name) => {
         await page.close();
     } catch (error) {
         return 'create_fail';
-        // console.error('Error Create:', error);
-        // throw new Error('Error Create:', error);
     }
 }
 const checkDie = async (page, port, name) => {
     try {
+        const listErrors = await readErrProfiles(path.join(__dirname, 'error_profile.txt'))
+        if (listErrors.includes(`${name}_${port}`)) {
+            console.log('Already checked this profile:', `${name}_${port}`);
+            return true;
+        }
         console.log('Checking for errors... die');
         await page.waitForSelector('.error-section.callout.severity-error.is-loud', { timeout: 10 * 1000 });
         const errorMessage = await page.evaluate(() => {
@@ -444,10 +450,14 @@ const checkDie = async (page, port, name) => {
 
         if (errorMessage) {
             console.log('Error message:', errorMessage);
+            if (errorMessage.includes('detected suspicious activity')) {
+                console.log('Error message:', errorMessage);
+                await saveErrProfile(path.join(__dirname, 'error_profile.txt'), `${name}_${port}`);
+            }
             await sendTelegramMessage(
                 TELEGRAM_BOT_TOKEN,
                 TELEGRAM_CHAT_ID,
-                `Máy #_${name}_# số ${+port - 9220} ⚠️ Error detected: ${errorMessage}`
+                `Máy #_${name}_# số ${+port - 9220} #tails${port} ⚠️ Error detected::: ${errorMessage}`
             );
             return true;
         }
@@ -471,8 +481,9 @@ const runJob = async (port, name) => {
 
         console.log('Error creating new page');
 
-        const {page: homePage, mainTargetLinks: listLInk} = await openHomePageAndGetLinks(browser);
+        const { page: homePage, mainTargetLinks: listLInk } = await openHomePageAndGetLinks(browser);
         await closeAllTabs(browser, true);
+
         console.log('open link: check google fails');
         const link = listLInk[0];
         await homePage.goto(link.href);
@@ -483,6 +494,7 @@ const runJob = async (port, name) => {
             throw new Error('google fails');
         }
         await homePage.close();
+        console.log('open link: check google fails done');
         for (const link of listLInk) {
             await reset(browser, link.href).catch(() => reset(browser, link.href).catch());
         }
@@ -505,6 +517,101 @@ const combineOpenReset = async (port, name, profilePath) => {
     });
 }
 
+function readDirectory(directoryPath) {
+    console.log(`Reading files in: ${directoryPath}\n`);
+    try {
+        // Get all files and directories in the current directory
+        const items = fs.readdirSync(directoryPath);
+
+        items.forEach(item => {
+            const itemPath = path.join(directoryPath, item);
+            const stats = fs.statSync(itemPath);
+
+            if (stats.isDirectory()) {
+                console.log(`📁 Directory: ${item}`);
+            } else {
+                console.log(`📄 File: ${item} (${(stats.size / 1024).toFixed(2)} KB)`);
+            }
+        });
+
+        return items;
+    } catch (error) {
+        console.error(`Error reading directory: ${error.message}`);
+        return [];
+    }
+}
+
+const runTerminal = (name, port, runPath) => {
+    return new Promise((res, rej) => {
+        const child = fork(runPath, [name, port]);
+        child.on('close', (code) => {
+            console.log(`close_________ ${code}`);
+            rej();
+        });
+        child.on('exit', (code) => {
+            console.log(`exit__________ ${code}`);
+        });
+        child.on('message', (code) => {
+            console.log(`message ${code}`);
+        });
+    });
+
+}
+
+const runAllProfile = async (machine, profilePath, runPath) => {
+    try {
+        await killChromeProcess().catch(console.error);
+        await new Promise(resolve => setTimeout(resolve, 3 * 1000));
+        const fileList = readDirectory(profilePath);
+        for (const element of fileList) {
+            try {
+                const name = element.slice(-4);
+                const count = +name - 9220;
+                await runTerminal(`${machine}-p${count}`, count, runPath);
+                await new Promise(resolve => setTimeout(resolve, 3 * 1000));
+            } catch (error) {
+                console.error('Error in runTerminal:', error);
+            }
+        }
+    }
+    catch (error) {
+        console.error('Error in main:', error);
+    }
+}
+
+const saveErrProfile = async (filePath, profilePathName) => {
+    try {
+        // Append the profile path name to the error file
+        fs.appendFileSync(filePath, profilePathName + '\n', { encoding: 'utf8' });
+        console.log(`Successfully saved error profile: ${profilePathName} to ${filePath}`);
+        return true;
+    } catch (error) {
+        console.error(`Error saving profile path to error file: ${error.message}`);
+        return false;
+    }
+};
+const readErrProfiles = (filePath) => {
+    try {
+        // Check if the error file exists
+        if (!fs.existsSync(filePath)) {
+            console.log(`Error file ${filePath} does not exist yet. Returning empty array.`);
+            return [];
+        }
+
+        // Read the file content and split by newlines to get individual profiles
+        const fileContent = fs.readFileSync(filePath, { encoding: 'utf8' });
+        const profiles = fileContent
+            .split('\n')
+            .filter(line => line.trim() !== ''); // Remove empty lines
+
+        console.log(`Successfully read ${profiles.length} error profiles from ${filePath}`);
+        return profiles;
+    } catch (error) {
+        console.error(`Error reading error profiles from file: ${error.message}`);
+        return [];
+    }
+};
+
 module.exports = {
     openChrome,
     initConnection,
@@ -519,4 +626,5 @@ module.exports = {
     closeAllTabs,
     combineOpenReset,
     openHomePageAndGetLinks,
+    runAllProfile,
 }
