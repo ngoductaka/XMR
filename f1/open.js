@@ -25,8 +25,7 @@ const openChrome = async (port, profilePath) => {
     });
 }
 
-const base = parseInt(process.argv[2], 10) || 9220;
-const port = base + parseInt(process.argv[3], 10) || 1;
+const port = 9220 + parseInt(process.argv[2], 10) || 1;
 
 const profilePath = path.join(__dirname, 'profile', `chrome-profile${port}`);
 openChrome(port, profilePath);

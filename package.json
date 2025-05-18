@@ -5,9 +5,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "f1": "node f1/start.js",
-    "o1": "node f1/open.js 9220",
+    "o1": "node f1/open.js",
     "f2": "node f2/start.js",
-    "o2": "node f2/open.js 9320"
+    "o2": "node f2/open.js"
   },
   "author": "",
   "license": "ISC",
