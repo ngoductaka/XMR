@@ -4,6 +4,5 @@ coverage
 profile/*
 f1/profile/*
 f2/profile/*
-f3/profile/*
-f0/profile/*
-error_profile.txt
+f1/error_profile.txt
+f2/error_profile.txt

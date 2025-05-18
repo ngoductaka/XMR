@@ -11,9 +11,11 @@ const openChrome = async (port, profilePath) => {
   let remoteDebugCmd = ''
   if (process.platform === 'win32') {
     const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+    // const profilePath = path.resolve(__dirname, 'profile', profile);
     remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}"`;
   } else {
     const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+    // const profilePath = path.join(__dirname, 'profile', profile);
     remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}"`;
   }
   return new Promise((resolve, reject) => {
@@ -145,11 +147,6 @@ const closeOtherTabs = async (driver) => {
 }
 const checkGG = async (driver, name, port) => {
   try {
-    const listErrors = await readErrProfiles(path.join(__dirname, 'error_profile.txt'))
-    if (listErrors.includes(`${name}_${port}`)) {
-      console.log('Already checked this profile:', `${name}_${port}`);
-      return 'suspicious';
-    }
     let err = '';
     await driver.wait(until.elementLocated(By.css('.error-section.callout.severity-error.is-loud')), 10000);
     const errorElement = await driver.findElement(By.css('.error-section.callout.severity-error.is-loud p'));
@@ -158,7 +155,7 @@ const checkGG = async (driver, name, port) => {
     if (errorMessage) {
       console.log('Error message:', errorMessage);
       if (errorMessage.includes('detected suspicious activity')) {
-        await saveErrProfile(path.join(__dirname, 'error_profile.txt'), `${name}_${port}`);
+        // await saveErrProfile(path.join(__dirname, 'error_profile.txt'), `${name}_${port}`);
         err = 'suspicious';
       }
       await sendTelegramMessage(
@@ -184,7 +181,7 @@ const runCMDWithSelenium = async (driver, name) => {
     console.log('Running command with Selenium...');
     await driver.wait(until.elementLocated(By.css('.the-iframe.is-loaded')), 30 * 1000);
     console.log('Pressed============');
-    await wait(60, 20);
+    await wait(30, 3);
     console.log('Pressed============1');
     await driver.actions()
       .keyDown(Key.CONTROL)
@@ -222,7 +219,7 @@ const runCMDWithSelenium = async (driver, name) => {
     console.error('Error in runCMDWithSelenium:', error);
   }
 }
-const restartProfile = async ({driver, listNewLink: links, port, name}) => {
+const restartProfile = async (driver, links, port) => {
   let check = false;
   for (const link of links) {
     // Get the worker name from the URL
@@ -243,9 +240,10 @@ const restartProfile = async ({driver, listNewLink: links, port, name}) => {
 
     // Wait for iframe to load
     await driver.wait(until.elementLocated(By.css('iframe.is-loaded')), 8 * 60 * 1000);
+    console.log('loaded =============:');
+
     // Run commands
-    const worker = workerName.includes(name) ? workerName : `${name}-${workerName}`;
-    await runCMDWithSelenium(driver, worker);
+    await runCMDWithSelenium(driver, workerName);
 
     // Set a timer to close this after some time (not directly applicable in Selenium)
     // We'll just proceed to the next link
@@ -267,7 +265,7 @@ const runProfile = async (port, name) => {
   const listNewLink = await getMainTargetLinks(driver);
 
   if (!listNewLink || listNewLink.length === 0) return;
-  await restartProfile({driver, listNewLink, port, name});
+  await restartProfile(driver, listNewLink, port);
 
   return listLink;
 }
@@ -332,6 +330,10 @@ function readDirectory(directoryPath) {
 
 async function connectToDebugChrome(name, port) {
   console.log('Connecting to debug Chrome on port:', name, port);
+
+  // const count = process.argv[3] ? parseInt(process.argv[3], 10) : 1;
+  // const port = parseInt((9220 + count), 10);
+  // const name = process.argv[2] || `dnd`;
   const profilePath = path.join(__dirname, 'profile', `chrome-profile${port}`);
   openChrome(port, profilePath);
   await new Promise(resolve => setTimeout(resolve, 3 * 1000));
@@ -339,39 +341,7 @@ async function connectToDebugChrome(name, port) {
   killChromeProcess().catch(console.error);
 };
 
-const saveErrProfile = async (filePath, profilePathName) => {
-  try {
-    // Append the profile path name to the error file
-    fs.appendFileSync(filePath, profilePathName + '\n', { encoding: 'utf8' });
-    console.log(`Successfully saved error profile: ${profilePathName} to ${filePath}`);
-    return true;
-  } catch (error) {
-    console.error(`Error saving profile path to error file: ${error.message}`);
-    return false;
-  }
-};
-const readErrProfiles = (filePath) => {
-  try {
-    // Check if the error file exists
-    if (!fs.existsSync(filePath)) {
-      console.log(`Error file ${filePath} does not exist yet. Returning empty array.`);
-      return [];
-    }
-
-    // Read the file content and split by newlines to get individual profiles
-    const fileContent = fs.readFileSync(filePath, { encoding: 'utf8' });
-    const profiles = fileContent
-      .split('\n')
-      .filter(line => line.trim() !== ''); // Remove empty lines
-
-    console.log(`Successfully read ${profiles.length} error profiles from ${filePath}`);
-    return profiles;
-  } catch (error) {
-    console.error(`Error reading error profiles from file: ${error.message}`);
-    return [];
-  }
-};
-
+// connectToDebugChrome();
 const main = async () => {
   const machineName = process.argv[2] || `dnd`;
   const profilePath = path.join(__dirname, 'profile');
@@ -380,11 +350,18 @@ const main = async () => {
     try {
       const port = element.slice(-4);
       console.log('port:', port);
+      // const count = +name - 9220;
       await connectToDebugChrome(`${machineName}-p${port}`, port).catch(console.error);
       await new Promise(resolve => setTimeout(resolve, 3 * 1000));
     } catch (error) {
       console.error('Error in runTerminal:', error);
     }
   }
+  setTimeout(() => {
+    console.log('_____________________________restart', new Date().toLocaleTimeString());
+    main();
+  }
+    , 5 * 1000);
+
 }
 main();

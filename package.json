@@ -4,24 +4,17 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node run_all.js",
-    "dev": "node run.js",
-    "start_f0": "node f0/run_all.js",
-    "dev_f0": "node f0/run.js",
-    "start_f1": "node f1/run_all.js",
-    "dev_f1": "node f1/run.js",
-    "start_f2": "node f2/run_all.js",
-    "dev_f2": "node f2/run.js",
-    "start_f3": "node f3/run_all.js",
-    "dev_f3": "node f3/run.js",
-    "start_f4": "node f4/run_all.js",
-    "dev_f4": "node f4/run.js"
+    "f1": "node f1/start.js",
+    "o1": "node f1/open.js 9220",
+    "f2": "node f2/start.js",
+    "o2": "node f2/open.js 9320"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "axios": "^1.9.0",
+    "chrome-remote-interface": "^0.33.3",
     "chromedriver": "^136.0.2",
     "selenium-webdriver": "^4.32.0"
   }
