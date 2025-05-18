@@ -184,7 +184,8 @@ const runCMDWithSelenium = async (driver, name) => {
     console.log('Running command with Selenium...');
     await driver.wait(until.elementLocated(By.css('.the-iframe.is-loaded')), 30 * 1000);
     console.log('Pressed============');
-    await wait(60, 20);
+    // await wait(60, 20);
+    await new Promise(resolve => setTimeout(resolve, 1000 * 20));
     console.log('Pressed============1');
     await driver.actions()
       .keyDown(Key.CONTROL)
@@ -222,7 +223,7 @@ const runCMDWithSelenium = async (driver, name) => {
     console.error('Error in runCMDWithSelenium:', error);
   }
 }
-const restartProfile = async ({driver, listNewLink: links, port, name}) => {
+const restartProfile = async ({ driver, listNewLink: links, port, name }) => {
   let check = false;
   for (const link of links) {
     // Get the worker name from the URL
@@ -234,6 +235,7 @@ const restartProfile = async ({driver, listNewLink: links, port, name}) => {
       check = true;
       const err = await checkGG(driver, workerName, port);
       if (err === 'suspicious') {
+        await driver.close();
         await driver.quit();
         throw new Error('Suspicious activity detected');
       }
@@ -260,16 +262,23 @@ const restartProfile = async ({driver, listNewLink: links, port, name}) => {
 
 const runProfile = async (port, name) => {
   const driver = await connectChrome(port);
-  const listLink = await getMainTargetLinks(driver)
-  await createNewProfileIfCan(driver, listLink, name);
-  // await closeOtherTabs(driver);
+  try {
+    const listLink = await getMainTargetLinks(driver)
+    await createNewProfileIfCan(driver, listLink, name);
+    // await closeOtherTabs(driver);
 
-  const listNewLink = await getMainTargetLinks(driver);
+    const listNewLink = await getMainTargetLinks(driver);
 
-  if (!listNewLink || listNewLink.length === 0) return;
-  await restartProfile({driver, listNewLink, port, name});
+    if (!listNewLink || listNewLink.length === 0) return;
+    await restartProfile({ driver, listNewLink, port, name });
 
-  return listLink;
+    return listLink;
+  } catch (error) {
+    console.error('Error in runProfile:', error);
+    await driver.close();
+    await driver.quit();
+    return;
+  }
 }
 
 
