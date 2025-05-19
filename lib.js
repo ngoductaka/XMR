@@ -497,8 +497,15 @@ const runJob = async (port, name) => {
         }
         await homePage.close();
         console.log('open link: check google fails done');
+        let count = 0;
         for (const link of listLInk) {
+            const profileStartTime = Date.now();
+
             await reset(browser, link.href, name).catch(console.error);
+
+            const profileTime = ((Date.now() - profileStartTime) / 60000).toFixed(2);
+            console.log(`Completed worker ${++count} in ${profileTime} minutes`);
+
         }
         await closeAllTabs(browser);
     } catch (error) {
@@ -567,10 +574,15 @@ const runAllProfile = async (machine, profilePath, runPath) => {
         const fileList = readDirectory(profilePath);
         for (const element of fileList) {
             try {
+                const profileStartTime = Date.now();
+
                 const count = element.slice(-4);
-                // const count = +name - 9220;
                 await runTerminal(`${machine}-p${count}`, count, runPath);
                 await new Promise(resolve => setTimeout(resolve, 3 * 1000));
+
+                const profileTime = ((Date.now() - profileStartTime) / 60000).toFixed(2);
+                console.log(`Completed profile ${completedProfiles}/${fileList.length} in ${profileTime} minutes`);
+
             } catch (error) {
                 console.error('Error in runTerminal:', error);
             }
