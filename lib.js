@@ -186,9 +186,9 @@ const openHomePageAndGetLinks = async (browser) => {
 
     // Get list of <a> tags with ID/class main-target and their href values
     const mainTargetLinks = await page.evaluate(() => {
-        const classElements = document.querySelectorAll('a.main-target');
+        const classElements = document.querySelectorAll('.workspace-id');
         const allElements = Array.from(classElements);
-        return allElements.map(el => ({ href: el.href }));
+        return allElements.map(el => ({ href: `https://idx.google.com/${el.textContent}` }));
     });
     console.log('Found <a> tags with main-target:', mainTargetLinks);
     return { browser, page, mainTargetLinks };
@@ -388,7 +388,7 @@ const TELEGRAM_BOT_TOKEN = '7668129713:AAGGfomtEre-W2QH0r1FUPL1Z9pKSd0KMlQ';
 // const TELEGRAM_CHAT_ID = '1140704410';
 const TELEGRAM_CHAT_ID = '-4750007696'; // group chat id
 
-const reset = async (browser, link) => {
+const reset = async (browser, link, name) => {
     try {
         const location = link.split('/');
         const workerName = location[location.length - 1];
@@ -402,9 +402,10 @@ const reset = async (browser, link) => {
             return iframe ? iframe.src : null;
         });
         console.log('open workerName:', workerName);
-        await resetWithLink(page, iframeSrc, workerName).catch(async (err) => {
+        const workerNamePref = workerName.includes(name) ? workerName : name + workerName;
+        await resetWithLink(page, iframeSrc, workerNamePref).catch(async (err) => {
             console.error('Error resetting with link::________________dnd____', err);
-            await resetWithLink(page, iframeSrc, workerName).catch()
+            // await resetWithLink(page, iframeSrc, workerNamePref).catch()
         });
         const time = (2 * Math.random()) * 60 * 1000;
         console.log(workerName + 'done and closing page in ' + time);
@@ -431,6 +432,7 @@ const create = async (page, name) => {
 }
 const checkDie = async (page, port, name) => {
     try {
+        console.log('Checking for errors... die', `${name}_${port}`);
         const listErrors = await readErrProfiles(path.join(__dirname, 'error_profile.txt'))
         if (listErrors.includes(`${name}_${port}`)) {
             console.log('Already checked this profile:', `${name}_${port}`);
@@ -496,7 +498,7 @@ const runJob = async (port, name) => {
         await homePage.close();
         console.log('open link: check google fails done');
         for (const link of listLInk) {
-            await reset(browser, link.href).catch(() => reset(browser, link.href).catch());
+            await reset(browser, link.href, name).catch(console.error);
         }
         await closeAllTabs(browser);
     } catch (error) {
@@ -509,7 +511,7 @@ const combineOpenReset = async (port, name, profilePath) => {
     return new Promise((resolve, reject) => {
         openChrome(port, profilePath)
         setTimeout(() => {
-            console.log('_____________________________combineOpenReset with port:', port);
+            console.log(name, '_____________________________combineOpenReset with port:', port);
             runJob(port, name).finally(() => {
                 resolve();
             })
@@ -565,8 +567,8 @@ const runAllProfile = async (machine, profilePath, runPath) => {
         const fileList = readDirectory(profilePath);
         for (const element of fileList) {
             try {
-                const name = element.slice(-4);
-                const count = +name - 9220;
+                const count = element.slice(-4);
+                // const count = +name - 9220;
                 await runTerminal(`${machine}-p${count}`, count, runPath);
                 await new Promise(resolve => setTimeout(resolve, 3 * 1000));
             } catch (error) {
@@ -628,3 +630,4 @@ module.exports = {
     openHomePageAndGetLinks,
     runAllProfile,
 }
+// action-label single-terminal-tab

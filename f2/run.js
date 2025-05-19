@@ -1,8 +1,7 @@
 const path = require('path');
 const { combineOpenReset } = require('../lib');
 
-const count = process.argv[3] ? parseInt(process.argv[3], 10) : 1;
-const port = parseInt((9220 + count), 10);
+const port = process.argv[3] ? parseInt(process.argv[3], 10) : 1;
 const name = process.argv[2] ? process.argv[2] : 'e-';
 if (isNaN(port) || port < 1024 || port > 65535) {
     console.error('Please provide a valid port number between 1024 and 65535');
