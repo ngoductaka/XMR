@@ -79,13 +79,13 @@ const getMainTargetLinks = async (driver) => {
     });
   console.log('Page loaded and .main-target elements are present');
   // Get list of links with class "main-target"
-  const mainTargetElements = await driver.findElements(By.css('.main-target'));
+  const mainTargetElements = await driver.findElements(By.css('.workspace-id'));
 
   // Extract href attributes from found elements
   for (const element of mainTargetElements) {
     try {
-      const href = await element.getAttribute('href');
-      mainTargetLinks.push({ href });
+      const textContent = await element.getText();
+      mainTargetLinks.push({ href:  'https://idx.google.com/'+ textContent});
     } catch (error) {
       console.error('Error getting href attribute:', error.message);
     }
@@ -236,14 +236,18 @@ const runCMDWithSelenium = async (driver, name) => {
     console.error('Error in run cmd:', error);
   }
 }
-const restartProfile = async ({ driver, listNewLink: links, port, name }) => {
+const restartAllWorker = async ({ driver, listNewLink: links, port, name }) => {
+  console.log('Restarting all workers with Selenium...');
   let check = false;
+  let count = 0;
   for (const link of links) {
+    console.log(++count, 'link:', link);
     // Get the worker name from the URL
     const location = link.href.split('/');
     const workerName = location[location.length - 1];
     console.log('open links:', link);
     await driver.get(link.href);
+    console.log('open links done');
     if (!check) {
       check = true;
       const err = await checkGG(driver, workerName, port);
@@ -253,33 +257,30 @@ const restartProfile = async ({ driver, listNewLink: links, port, name }) => {
         throw new Error('Suspicious activity detected');
       }
     }
-    console.log('Resetting link with Selenium:', link.href);
+    console.log('Resetting link with Selenium:');
     // Wait for iframe to load
     await driver.wait(until.elementLocated(By.css('iframe.is-loaded')), 3 * 60 * 1000);
     const iframe = await driver.findElement(By.css('iframe.is-loaded'));
     const src = await iframe.getAttribute('src');
-    console.log('iframe src:', src);
+    console.log('iframe src:', src.length);
     const originalTab = await openNewTab(driver, src);
     await driver.wait(until.elementLocated(By.css('.menubar-menu-button')), 60 * 1000);
     await driver.wait(until.elementLocated(By.css('.monaco-highlighted-label')), 60 * 1000);
     const worker = workerName.includes(name) ? workerName : `${name}-${workerName}`;
 
-
     await runCMDWithSelenium(driver, worker.slice(0, 16));
-    console.log('done cmd');
+    console.log('done cmd index:', count);
     await wait(10, 10);
     await driver.close();
     await wait(10, 10);
     await driver.switchTo().window(originalTab); // Switch back when done
     // Set a timer to close this after some time (not directly applicable in Selenium)
     // We'll just proceed to the next link
-    console.log(`${workerName} done with Selenium`);
+    console.log(`${workerName} done with Selenium index:`, count);
     await wait(1, 2);
     // Wait a bit before moving to the next link
 
   }
-
-
 };
 /**
  * Opens a new browser tab and switches to it
@@ -315,7 +316,7 @@ const openNewTab = async (driver, url = null) => {
   }
 };
 
-const runProfile = async (port, name) => {
+const runProfiles = async (port, name) => {
   const driver = await connectChrome(port);
   try {
     const listLink = await getMainTargetLinks(driver)
@@ -325,12 +326,15 @@ const runProfile = async (port, name) => {
     const listNewLink = await getMainTargetLinks(driver);
 
     if (!listNewLink || listNewLink.length === 0) return;
-    await restartProfile({ driver, listNewLink, port, name });
+    // for_test
+    // listNewLink.length = 1;
+    console.log('listNewLink:', listNewLink.length);
+    // const firstLink = listNewLink[0];
+    await restartAllWorker({ driver, listNewLink, port, name });
     await driver.close();
     await driver.quit();
-    return listLink;
   } catch (error) {
-    console.error('Error in runProfile:', error);
+    console.error('Error in runProfiles:', error);
     await driver.close();
     await driver.quit();
     return;
@@ -400,7 +404,7 @@ async function connectToDebugChrome(name, port) {
   const profilePath = path.join(__dirname, 'profile', `chrome-profile${port}`);
   openChrome(port, profilePath);
   await new Promise(resolve => setTimeout(resolve, 3 * 1000));
-  await runProfile(port, name);
+  await runProfiles(port, name);
   // killChromeProcess().catch(console.error);
 };
 
@@ -441,12 +445,26 @@ const main = async () => {
   const machineName = process.argv[2] || `dnd`;
   const profilePath = path.join(__dirname, 'profile');
   const fileList = readDirectory(profilePath);
+  fileList.reverse();
   for (const element of fileList) {
     try {
+      const profileStartTime = new Date();
+
       const port = element.slice(-4);
       console.log('port:', port);
-      await connectToDebugChrome(`${machineName}-p${port}`, port).catch(console.error);
+
+      const workerPrefix = `${machineName}-p${port}`;
+      const profilePath = path.join(__dirname, 'profile', `chrome-profile${port}`);
+
+      console.log(`[${workerPrefix}] Starting profile at ${profileStartTime.toLocaleString()}`);
+      openChrome(port, profilePath);
       await new Promise(resolve => setTimeout(resolve, 3 * 1000));
+
+      await runProfiles(port, workerPrefix);
+
+      const profileEndTime = new Date();
+      const profileDuration = (profileEndTime - profileStartTime) / 1000;
+      console.log(`done_profile: chrome-profile${port} completed in ${(profileDuration/60).toFixed(2)} minutes`);
     } catch (error) {
       console.error('Error in runTerminal:', error);
     }
