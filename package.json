@@ -7,7 +7,7 @@
     "f1": "node f1/run_all.js",
     "d1": "node f1/run.js",
     "o1": "node f1/open.js",
-    "r2": "node f2/run_all.js",
+    "f2": "node f2/run_all.js",
     "o2": "node f2/open.js",
     "d2": "node f2/run.js"
   },
