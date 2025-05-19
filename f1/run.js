@@ -95,6 +95,12 @@ const getMainTargetLinks = async (driver) => {
 const connectChrome = async (port) => {
 
   let options = new chrome.Options();
+  options.addArguments(
+    '--disable-popup-blocking',
+    '--disable-infobars',
+    '--disable-session-crashed-bubble',  // 💡 THIS disables the "Restore pages" bubble
+    '--no-first-run'
+  );
   options.options_['debuggerAddress'] = 'localhost:' + port;
 
   let driver = await new Builder()
