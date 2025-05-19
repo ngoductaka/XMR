@@ -11,10 +11,10 @@ const openChrome = async (port, profilePath) => {
   let remoteDebugCmd = ''
   if (process.platform === 'win32') {
     const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-    remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}"`;
+    remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}" --disable-session-crashed-bubble --no-first-run --no-default-browser-check --restore-last-session --disable-infobars --disable-popup-blocking`;
   } else {
     const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-    remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}"`;
+    remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}" --disable-session-crashed-bubble --no-first-run --no-default-browser-check --restore-last-session --disable-infobars --disable-popup-blocking`;
   }
   return new Promise((resolve, reject) => {
     console.log('Executing:', remoteDebugCmd);
@@ -190,9 +190,16 @@ const runCMDWithSelenium = async (driver, name) => {
     console.log('Running command with Selenium...');
     await driver.wait(until.elementLocated(By.css('.the-iframe.is-loaded')), 30 * 1000);
     console.log('Pressed============');
-    // await wait(60, 20);
-    await new Promise(resolve => setTimeout(resolve, 1000 * 20));
-    console.log('Pressed============1');
+    await new Promise(resolve => setTimeout(resolve, 1000 * 5));
+    console.log('Pressed============2');
+    await new Promise(resolve => setTimeout(resolve, 1000 * 5));
+    console.log('Pressed============3');
+    await new Promise(resolve => setTimeout(resolve, 1000 * 5));
+    console.log('Pressed============4');
+    await new Promise(resolve => setTimeout(resolve, 1000 * 5));
+    console.log('Pressed============5');
+    await new Promise(resolve => setTimeout(resolve, 1000 * 5));
+    console.log('Pressed============6');
     await driver.actions()
       .keyDown(Key.CONTROL)
       .sendKeys('`')
