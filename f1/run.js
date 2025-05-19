@@ -188,28 +188,32 @@ const checkGG = async (driver, name, port) => {
 const runCMDWithSelenium = async (driver, name) => {
   try {
     console.log('Running command with Selenium...');
-    await driver.wait(until.elementLocated(By.css('.the-iframe.is-loaded')), 30 * 1000);
     console.log('Pressed============');
     await new Promise(resolve => setTimeout(resolve, 1000 * 5));
-    console.log('Pressed============2');
-    await new Promise(resolve => setTimeout(resolve, 1000 * 5));
-    console.log('Pressed============3');
-    await new Promise(resolve => setTimeout(resolve, 1000 * 5));
-    console.log('Pressed============4');
-    await new Promise(resolve => setTimeout(resolve, 1000 * 5));
-    console.log('Pressed============5');
-    await new Promise(resolve => setTimeout(resolve, 1000 * 5));
-    console.log('Pressed============6');
     await driver.actions()
       .keyDown(Key.CONTROL)
       .sendKeys('`')
       .keyUp(Key.CONTROL)
       .perform();
+    await driver.wait(until.elementLocated(By.css('.xterm-helper-textarea')), 2 * 60 * 1000).catch(async () => {
+      await driver.actions()
+        .keyDown(Key.CONTROL)
+        .sendKeys('`')
+        .keyUp(Key.CONTROL)
+        .perform();
+    })
+    // Try to find the helper textarea
+    const textarea = await driver.findElement(By.css('.xterm-helper-textarea'));
+
+    // Use JavaScript to force focus (more reliable than click)
+    await driver.executeScript("arguments[0].focus()", textarea);
+
     await driver.actions()
       .keyDown(Key.CONTROL)
       .sendKeys('c')
       .keyUp(Key.CONTROL)
       .perform();
+    ;
     console.log('Pressed Control+C with Selenium');
 
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -244,6 +248,12 @@ const restartProfile = async ({ driver, listNewLink: links, port, name }) => {
     const workerName = location[location.length - 1];
     console.log('open links:', link);
     await driver.get(link.href);
+
+    // const iframeSrc = await page.evaluate(() => {
+    //     const iframe = document.querySelector('iframe.is-loaded');
+    //     return iframe ? iframe.src : null;
+    // });
+
     if (!check) {
       check = true;
       const err = await checkGG(driver, workerName, port);
@@ -258,7 +268,13 @@ const restartProfile = async ({ driver, listNewLink: links, port, name }) => {
 
     // Wait for iframe to load
     await driver.wait(until.elementLocated(By.css('iframe.is-loaded')), 4 * 60 * 1000);
-    // Run commands
+
+    const iframe = await driver.findElement(By.css('iframe.is-loaded'));
+    const src = await iframe.getAttribute('src');
+    console.log('iframe src:', src);
+    await driver.get(src);
+    await driver.wait(until.elementLocated(By.css('.menubar-menu-button')), 60 * 1000);
+    await driver.wait(until.elementLocated(By.css('.monaco-highlighted-label')), 60 * 1000);
     const worker = workerName.includes(name) ? workerName : `${name}-${workerName}`;
     await runCMDWithSelenium(driver, worker.slice(0, 23));
 
@@ -278,7 +294,7 @@ const runProfile = async (port, name) => {
   try {
     const listLink = await getMainTargetLinks(driver)
     await createNewProfileIfCan(driver, listLink, name);
-    // await closeOtherTabs(driver);
+    await closeOtherTabs(driver);
 
     const listNewLink = await getMainTargetLinks(driver);
 
