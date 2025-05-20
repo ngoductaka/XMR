@@ -13,6 +13,6 @@ const main = async (port, name) => {
     console.log('_____________________________Starting process with port:', port);
     const profilePath = path.resolve(__dirname, 'profile', `chrome-profile${port}`);
     await combineOpenReset(port, name, profilePath);
-    process.exit('done');
+    process.exit(1);
 }
 main(port, name);

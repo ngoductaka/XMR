@@ -471,8 +471,8 @@ const checkDie = async (page, port, name) => {
     }
 }
 const runJob = async (port, name) => {
+    const { browser, page, mainTargetLinks } = await openOldConnection(port).catch(console.error);
     try {
-        const { browser, page, mainTargetLinks } = await openOldConnection(port);
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
                 const result = await create(page, `${name}-w${i}-`);
@@ -520,7 +520,7 @@ const combineOpenReset = async (port, name, profilePath) => {
         openChrome(port, profilePath)
         setTimeout(() => {
             console.log(name, '_____________________________combineOpenReset with port:', port);
-            runJob(port, name).finally(() => {
+            runJob(port, name).catch(console.log).finally(() => {
                 resolve();
             })
         }, 2000);
@@ -647,4 +647,4 @@ module.exports = {
     runAllProfile,
 }
 // action-label single-terminal-tab
-// v5.20.2
+// v5.20.3
