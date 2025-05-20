@@ -237,9 +237,7 @@ const openChrome = async (port, profilePath) => {
 const hoverOnElement = async (page, selector) => {
     try {
         // Wait for the element to be present in the DOM
-        await page.waitForSelector(selector, { timeout: 5 * 1000 });
-
-        // Hover on the element
+        await page.waitForSelector(selector, { timeout: 20 * 1000 });
         await page.hover(selector);
 
         console.log(`Successfully hovered on element: ${selector}`);
@@ -247,7 +245,6 @@ const hoverOnElement = async (page, selector) => {
     } catch (error) {
         console.error(`Error hovering on ${selector}: ${error.message}`);
         throw error;
-        return false;
 
     }
 };
@@ -303,16 +300,21 @@ const resetWithLink = async (page, link, name) => {
     await page.waitForSelector('.menubar-menu-button', { timeout: 50000 });
     await page.waitForSelector('.monaco-highlighted-label', { timeout: 10 * 1000 });
     //  clear the terminal
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 10; i++) {
         try {
-            const id = `#list_id_1_${0}`;
-            await hoverOnElement(page, id);
-            await page.waitForSelector(`${id} li:nth-of-type(2)`, { timeout: 500 });
+            const id = `#list_id_1_${i}`;
+            console.log('20 s waiting for selector:', id);
+            await page.waitForSelector(id, { timeout: 20 * 1000 });
+            await page.hover(id);
+            await page.waitForSelector(`${id} li:nth-of-type(2)`, { timeout: 6 * 1000 });
             await page.click(`${id} li:nth-of-type(2)`);
         } catch (error) {
             console.error(`Error clicking on element: ${error.message}`);
+            break;
         }
     }
+
+    console.log('open new terminal:');
     await openTerminal(page);
     await runCMD1(page, name);
 }
@@ -407,8 +409,8 @@ const reset = async (browser, link, name) => {
             console.error('Error resetting with link::________________dnd____', err);
             // await resetWithLink(page, iframeSrc, workerNamePref).catch()
         });
-        const time = (2 * Math.random()) * 60 * 1000;
-        console.log(workerName + 'done and closing page in ' + time);
+        const time = (2 * Math.random() + 1) * 60 * 1000;
+        console.log(workerName + 'done and closing page in ' + time / 60000);
         setTimeout(async () => {
             await page.close();
             console.log(workerName + '_________closed___');
@@ -480,8 +482,7 @@ const runJob = async (port, name) => {
                 }
             }
         }
-
-        console.log('Error creating new page');
+        // console.log('done creating new page');
 
         const { page: homePage, mainTargetLinks: listLInk } = await openHomePageAndGetLinks(browser);
         await closeAllTabs(browser, true);
@@ -496,7 +497,7 @@ const runJob = async (port, name) => {
             throw new Error('google fails');
         }
         await homePage.close();
-        console.log('open link: check google fails done');
+        // console.log('open link: check google fails done');
         let count = 0;
         for (const link of listLInk) {
             const profileStartTime = Date.now();
@@ -504,7 +505,7 @@ const runJob = async (port, name) => {
             await reset(browser, link.href, name).catch(console.error);
 
             const profileTime = ((Date.now() - profileStartTime) / 60000).toFixed(2);
-            console.log(`Completed worker ${++count} in ${profileTime} minutes`);
+            console.log(`__dnd__Completed_worker ${name} - ${++count} in ${profileTime} minutes`);
 
         }
         await closeAllTabs(browser);
@@ -572,19 +573,22 @@ const runAllProfile = async (machine, profilePath, runPath) => {
         await killChromeProcess().catch(console.error);
         await new Promise(resolve => setTimeout(resolve, 3 * 1000));
         const fileList = readDirectory(profilePath);
+        let countProfile = 0;
         for (const element of fileList) {
+
+            const profileStartTime = Date.now();
             try {
-                const profileStartTime = Date.now();
 
                 const count = element.slice(-4);
                 await runTerminal(`${machine}-p${count}`, count, runPath);
                 await new Promise(resolve => setTimeout(resolve, 3 * 1000));
 
-                const profileTime = ((Date.now() - profileStartTime) / 60000).toFixed(2);
-                console.log(`Completed profile ${completedProfiles}/${fileList.length} in ${profileTime} minutes`);
 
             } catch (error) {
                 console.error('Error in runTerminal:', error);
+            } finally {
+                const profileTime = ((Date.now() - profileStartTime) / 60000).toFixed(2);
+                console.log(`__dnd__Completed_worker ${machine} - ${++countProfile}/total${fileList.length} in ${profileTime} minutes`);
             }
         }
     }
