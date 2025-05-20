@@ -171,13 +171,17 @@ const openOldConnection = async (port) => {
         browserURL: 'http://localhost:' + port,
         defaultViewport: null,
     });
-    const { page, mainTargetLinks } = await openHomePageAndGetLinks(browser);
-    return { browser, page, mainTargetLinks };
+    return { browser };
 }
 
 const openHomePageAndGetLinks = async (browser) => {
-    const page = await browser.newPage();
-    await page.goto('https://idx.google.com');
+    let page = await browser.newPage();
+    await page.goto('https://idx.google.com').catch(async () => {
+        console.error('Error navigating to https://idx.google.com');
+        // return { browser, page, mainTargetLinks: [] };
+        page = await browser.newPage();
+        await page.goto('https://idx.google.com')
+    })
 
     // Wait for selector to ensure the page is loaded
     await page.waitForSelector('.main-target', { timeout: 22 * 1000 }).catch(() => {
@@ -471,8 +475,10 @@ const checkDie = async (page, port, name) => {
     }
 }
 const runJob = async (port, name) => {
-    const { browser, page, mainTargetLinks } = await openOldConnection(port).catch(console.error);
+    const { browser } = await openOldConnection(port);
     try {
+
+        const { page: mainTargetLinks } = await openHomePageAndGetLinks(browser);
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
                 const result = await create(page, `${name}-w${i}-`);
@@ -510,8 +516,11 @@ const runJob = async (port, name) => {
         }
         await closeAllTabs(browser);
     } catch (error) {
-        await closeAllTabs(browser)
+        // await closeAllTabs(browser)
+
         console.error('Error in runJob:', error);
+
+        await new Promise(resolve => setTimeout(resolve, 30 * 1000));
         throw new Error(error);
     }
 }
@@ -647,4 +656,4 @@ module.exports = {
     runAllProfile,
 }
 // action-label single-terminal-tab
-// v5.20.3
+// v5.20.6
