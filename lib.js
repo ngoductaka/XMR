@@ -176,26 +176,25 @@ const openOldConnection = async (port) => {
 
 const openHomePageAndGetLinks = async (browser) => {
     let page = await browser.newPage();
-    await page.goto('https://idx.google.com').catch(async () => {
-        console.error('Error navigating to https://idx.google.com');
-        // return { browser, page, mainTargetLinks: [] };
-        page = await browser.newPage();
-        await page.goto('https://idx.google.com')
-    })
+    try {
+        await page.goto('https://idx.google.com');
+        await page.waitForSelector('.workspace-id', { timeout: 22 * 1000 }).catch(() => {
+            return { browser, page, mainTargetLinks: [] };
+        });
 
-    // Wait for selector to ensure the page is loaded
-    await page.waitForSelector('.main-target', { timeout: 22 * 1000 }).catch(() => {
-        return { browser, page, mainTargetLinks: [] };
-    });
-
-    // Get list of <a> tags with ID/class main-target and their href values
-    const mainTargetLinks = await page.evaluate(() => {
-        const classElements = document.querySelectorAll('.workspace-id');
-        const allElements = Array.from(classElements);
-        return allElements.map(el => ({ href: `https://idx.google.com/${el.textContent}` }));
-    });
-    console.log('Found <a> tags with main-target:', mainTargetLinks);
-    return { browser, page, mainTargetLinks };
+        // Get list of <a> tags with ID/class main-target and their href values
+        const mainTargetLinks = await page.evaluate(() => {
+            const classElements = document.querySelectorAll('.workspace-id');
+            const allElements = Array.from(classElements);
+            return allElements.map(el => ({ href: `https://idx.google.com/${el.textContent}` }));
+        });
+        console.log('Found workspace-id main-target:', mainTargetLinks, mainTargetLinks.length);
+        return { browser, page, mainTargetLinks };
+    }
+    catch (error) {
+        console.error('Error in openHomePageAndGetLinks:', error);
+        return { browser, page: page, mainTargetLinks: [] };
+    }
 }
 const runRestartScript = (script) => {
     return new Promise((resolve, reject) => {
@@ -477,8 +476,8 @@ const checkDie = async (page, port, name) => {
 const runJob = async (port, name) => {
     const { browser } = await openOldConnection(port);
     try {
-
-        const { page: mainTargetLinks } = await openHomePageAndGetLinks(browser);
+        const { page, mainTargetLinks } = await openHomePageAndGetLinks(browser);
+        console.log('__mainTargetLinks:', mainTargetLinks);
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
                 const result = await create(page, `${name}-w${i}-`);
@@ -488,7 +487,7 @@ const runJob = async (port, name) => {
                 }
             }
         }
-        // console.log('done creating new page');
+        console.log('done creating new page');
 
         const { page: homePage, mainTargetLinks: listLInk } = await openHomePageAndGetLinks(browser);
         await closeAllTabs(browser, true);
@@ -656,4 +655,4 @@ module.exports = {
     runAllProfile,
 }
 // action-label single-terminal-tab
-// v5.20.6
+// v5.20.8
