@@ -10,8 +10,12 @@ if (isNaN(port) || port < 1024 || port > 65535) {
 }
 
 const main = async (port) => {
+    console.log('_____________________________Starting process with port:', port);
     const profilePath = path.resolve(__dirname, 'profile', `chrome-profile${port}`);
     openChrome(port, profilePath)
-    process.exit(0);
+    setTimeout(() => {
+        process.exit(0);
+    }
+    , 5 * 1000);
 }
 main(port);

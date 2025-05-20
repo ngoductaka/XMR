@@ -647,3 +647,4 @@ module.exports = {
     runAllProfile,
 }
 // action-label single-terminal-tab
+// v5.20.2
