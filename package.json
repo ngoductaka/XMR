@@ -1,6 +1,6 @@
 {
   "name": "xrm",
-  "version": "1.0.0",
+  "version": "05.20.1",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
