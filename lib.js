@@ -510,7 +510,6 @@ const runJob = async (port, name) => {
             console.log('open link: check google fails');
             const link = mainTargetLinks[0];
             await page.goto(link.href);
-            await page.close();
             const isDie = await checkDie(page, port, name);
             if (isDie) {
                 await new Promise(resolve => setTimeout(resolve, 10 * 60 * 1000));
@@ -690,4 +689,4 @@ module.exports = {
     runAllProfile,
 }
 // cop file nay nhe
-// v5.20.12 => phien ban code
+// v5.20.13 => phien ban code
