@@ -441,6 +441,9 @@ const main = async () => {
   const machineName = process.argv[2] || `dnd`;
   const profilePath = path.join(__dirname, 'profile');
   const fileList = readDirectory(profilePath);
+  killChromeProcess();
+  await wait(5, 5);
+  console.log('kill chrome');
   // fileList.reverse();
   for (const element of fileList) {
     try {
