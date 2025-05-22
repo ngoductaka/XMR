@@ -10,19 +10,25 @@ const openChrome = async (port, profilePath) => {
         const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
         remoteDebugCmd = `"${chromePath}" --remote-debugging-port=${port} --user-data-dir="${profilePath}"`;
     }
-    return new Promise((resolve, reject) => {
-        console.log('Executing:', remoteDebugCmd);
-        exec(remoteDebugCmd, (error) => {
-            if (error) {
-                console.error(`Error launching Chrome: ${error.message}`);
-                reject(error);
-            } else {
-                console.log('Chrome launched with remote debugging');
-                resolve();
-            }
+    exec(remoteDebugCmd, (error) => {
+        if (error) {
+            console.error(`Error launching Chrome: ${error.message}`);
+            reject(error);
+        } else {
             console.log('Chrome launched with remote debugging');
-        });
+            resolve();
+        }
+        console.log('Chrome launched with remote debugging');
     });
+    await new Promise((resolve, reject) => {
+        setTimeout(() => {
+            console.log('Chrome launched with remote debugging');
+            resolve();
+        }
+            , 3000)
+    }
+    );
+    process.exit(0);
 }
 
 const port = 9220 + parseInt(process.argv[2], 10) || 1;
