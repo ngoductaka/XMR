@@ -13,10 +13,8 @@ const openChrome = async (port, profilePath) => {
     exec(remoteDebugCmd, (error) => {
         if (error) {
             console.error(`Error launching Chrome: ${error.message}`);
-            reject(error);
         } else {
             console.log('Chrome launched with remote debugging');
-            resolve();
         }
         console.log('Chrome launched with remote debugging');
     });
