@@ -486,10 +486,11 @@ const main = async () => {
       const profileEndTime = new Date();
       const profileDuration = (profileEndTime - profileStartTime) / (60 * 1000);
       console.log(`done_profile: chrome-profile${port} completed in ${(profileDuration).toFixed(2)} minutes`);
+      process.exit(0);
     } catch (error) {
       console.error('Error in runProfiles:');
     }
   }
 }
 main();
-// v1.1.0
+// v1.1.1
