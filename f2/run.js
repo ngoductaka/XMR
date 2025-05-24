@@ -12,7 +12,16 @@ const TELEGRAM_BOT_TOKEN = '7668129713:AAGGfomtEre-W2QH0r1FUPL1Z9pKSd0KMlQ';
 // const TELEGRAM_CHAT_ID = '1140704410';
 const TELEGRAM_CHAT_ID = '-4750007696'; // group chat id
 
-const wait = (min, maxPlus) => new Promise(resolve => setTimeout(resolve, (min * 10 + maxPlus * 10 * Math.random()) * 1000))
+const wait = (min, maxPlus) => new Promise(resolve => setTimeout(resolve, (min * 3 + maxPlus * 3 * Math.random()) * 1000))
+const scrollPage = async (driver, direction = 'down', amount = 300 + 300 * Math.random()) => {
+  try {
+    const scrollValue = direction === 'up' ? -amount : amount;
+    await driver.executeScript(`window.scrollBy(0, ${scrollValue});`);
+    console.log(`Scrolled ${direction} by ${amount} pixels`);
+  } catch (error) {
+    console.error(`Error scrolling ${direction}:`, error.message);
+  }
+}
 const openChrome = async (port, profilePath) => {
   let remoteDebugCmd = ''
   if (process.platform === 'win32') {
@@ -62,19 +71,17 @@ async function sendTelegramMessage(botToken, chatId, message) {
 }
 
 const getMainTargetLinks = async (driver) => {
-
   await driver.get('https://idx.google.com');
-  console.log('Navigated to https://idx.google.com');
-
+  await scrollPage(driver);
   await wait(2, 2);
   const mainTargetLinks = [];
   // Wait for the page to load and main-target elements to be present
-  await driver.wait(until.elementsLocated(By.css('.main-target')), 20 * 1000)
+  await driver.wait(until.elementsLocated(By.css('.main-target')), 10 * 60 * 1000)
     .catch(() => {
       console.log('No .main-target elements found within timeout period');
       return mainTargetLinks;
     });
-  await driver.wait(until.elementsLocated(By.css('.subtitle')), 20 * 1000)
+  await driver.wait(until.elementsLocated(By.css('.subtitle')), 10 * 60 * 1000)
     .catch(() => {
       console.log('No .subtitle elements found within timeout period');
       return mainTargetLinks;
@@ -82,6 +89,7 @@ const getMainTargetLinks = async (driver) => {
   // Get list of links with class "main-target"
   const mainTargetElements = await driver.findElements(By.css('.subtitle'));
 
+  await scrollPage(driver, 'up');
   // Extract href attributes from found elements
   for (const element of mainTargetElements) {
     try {
@@ -94,7 +102,25 @@ const getMainTargetLinks = async (driver) => {
       if (spanElements[0]) {
         firstSpanText = await spanElements[0].getText();
       }
-      mainTargetLinks.push({ href: 'https://idx.google.com/' + firstSpanText, isArchived: thirdSpanText === 'Archived' });
+      let needRestart = thirdSpanText === 'Archived';
+      let timeUnit = '';
+      if (thirdSpanText.includes('Accessed')) {
+        const timeMatch = thirdSpanText.match(/Accessed (\d+) (minutes?|hours?|days?) ago/);
+        if (timeMatch) {
+          const timeValue = parseInt(timeMatch[1]);
+          timeUnit = timeMatch[2];
+          if (timeUnit === 'hours') {
+            needRestart = true;
+          } else if (timeUnit === 'days') {
+            needRestart = true;
+          } else if (timeUnit === 'minutes' && timeValue >= 25) {
+            needRestart = true;
+          }
+        }
+      }
+      mainTargetLinks.push({
+        href: 'https://idx.google.com/' + firstSpanText, needRestart, time: thirdSpanText, timeUnit
+      });
     } catch (error) {
       console.error('Error getting href attribute:', error.message);
     }
@@ -122,6 +148,7 @@ const connectChrome = async (port) => {
 }
 const createNewProfileIfCan = async (driver, mainTargetLinks, name) => {
   if (mainTargetLinks.length < 10) {//dnd_test
+    console.log('Creating new profile if possible...', mainTargetLinks.length);
     for (let i = mainTargetLinks.length; i < 10; i++) {
       try {
         // Navigate to the new project page
@@ -130,19 +157,21 @@ const createNewProfileIfCan = async (driver, mainTargetLinks, name) => {
         await wait(2, 2);
 
         // Wait for and fill the input field
-        await driver.wait(until.elementLocated(By.css('#mat-input-0')), 30000);
+        await driver.wait(until.elementLocated(By.css('#mat-input-0')), 30 * 1000);
         await wait(2, 2);
         await driver.findElement(By.css('#mat-input-0')).sendKeys(`${name}-w${i}-`);
-        await wait(5, 3);
+        await wait(1, 3);
         await driver.findElement(By.css('#mat-input-0')).sendKeys('\uE007'); // Enter key
 
+        await scrollPage(driver);
         await wait(2, 2);
         // Wait for iframe to load
-        await driver.wait(until.elementLocated(By.css('iframe.is-loaded')), 60 * 1000);
+        await driver.wait(until.elementLocated(By.css('iframe.is-loaded')), 10 * 60 * 1000);
 
-        await wait(2, 2);
         // No need to close this page, we'll navigate away
-        console.log(`Created new project ${name}-w${i}-`);
+        console.log(`Created new project ${name}-w${i}----------- run terminal`);
+        await runWorker({ href: `https://idx.google.com/${name}-w${i}-`, driver, name, isCurrentTab: true });
+        await wait(2, 2);
       } catch (error) {
         console.log('Error creating new page with Selenium');
         break;
@@ -202,12 +231,8 @@ const checkGG = async (driver, name, port) => {
  */
 const runCMDWithSelenium = async (driver, name) => {
   try {
-    console.log('Running command with Selenium...');
-    console.log('Pressed============3');
     await wait(1, 2);
-    console.log('Pressed============2');
     await wait(1, 2);
-    console.log('Pressed============1');
     await wait(1, 2);
     console.log('open terminal');
     await driver.actions()
@@ -253,25 +278,18 @@ const runCMDWithSelenium = async (driver, name) => {
     // await driver.actions().sendKeys(cmd).perform();
     // await driver.actions().sendKeys('\uE007').perform(); // Enter key
   } catch (error) {
-    console.error('Error in run cmd:', error);
+    console.error('Error runCMDWithSelenium:');
   }
 }
-const restartAllWorker = async ({ driver, listNewLink: links, port, name }) => {
-  console.log('Restarting all workers with Selenium...');
-  let count = 0;
-  for (const link of links) {
-    const profileStartTime = new Date();
-    console.log(++count, 'link:', link);
-    if (!link.isArchived) {
-      console.log('Link is not archived, skipping:', link.href);
-      continue;
-    }
-    // Get the worker name from the URL
-    const location = link.href.split('/');
+
+const runWorker = async ({ href, driver, name, isCurrentTab = false }) => {
+  try {
+    const location = href.split('/');
     const workerName = location[location.length - 1];
-    console.log('open links:', link);
-    await wait(4, 3);
-    await driver.get(link.href);
+    await wait(3, 1);
+    console.log('open links:', href);
+    if (!isCurrentTab)
+      await driver.get(href);
     await wait(2, 3);
     console.log('Resetting link with Selenium:');
     // Wait for iframe to load
@@ -284,19 +302,32 @@ const restartAllWorker = async ({ driver, listNewLink: links, port, name }) => {
     await driver.wait(until.elementLocated(By.css('.menubar-menu-button')), 10 * 60 * 1000);
     await driver.wait(until.elementLocated(By.css('.monaco-highlighted-label')), 10 * 60 * 1000);
     await wait(4, 4);
-    const worker = workerName.includes(name) ? workerName : `${name}-${workerName}`;
-    await runCMDWithSelenium(driver, worker.slice(0, 16));
-    console.log('done cmd index:', count);
-    await wait(5, 4);
-    const profileEndTime = new Date();
-    const profileDuration = (profileEndTime - profileStartTime) / 60 * 1000;
-    console.log(`done_worker: ${count} completed in ${(profileDuration).toFixed(2)} minutes`);
+    const worker = workerName.includes(name) ? workerName : `${name}-${workerName.slice(-8)}`;
+    await runCMDWithSelenium(driver, worker);
+    await wait(3, 4);
 
     await driver.close();
     await driver.switchTo().window(originalTab); // Switch back when done
-    console.log(`${workerName} done with Selenium index:`, count);
     await wait(1, 2);
+  } catch (error) {
+    console.error('Error in _runWorker:', error);
+  }
+}
+const restartAllWorker = async ({ driver, listNewLink: links, port, name }) => {
+  let count = 0;
+  for (const link of links) {
+    const profileStartTime = new Date();
+    console.log(++count, 'link:', link);
+    if (!link.needRestart) {
+      console.log('Link is not archived, skipping:', link.href);
+      continue;
+    }
 
+    await runWorker({ href: link.href, driver, name });
+
+    const profileEndTime = new Date();
+    const profileDuration = (profileEndTime - profileStartTime) / (60 * 1000);
+    console.log(`done_worker: ${count} completed in ${(profileDuration).toFixed(2)} minutes`);
   }
 };
 /**
@@ -321,7 +352,7 @@ const openNewTab = async (driver, url = null) => {
     // Navigate to URL if provided
     if (url) {
       await driver.get(url);
-      console.log(`Opened new tab and navigated to ${url}`);
+      console.log(`Opened new tab and navigated`);
     } else {
       console.log('Opened new tab');
     }
@@ -337,7 +368,7 @@ const runProfiles = async (port, name) => {
   const driver = await connectChrome(port);
   try {
     const listLink = await getMainTargetLinks(driver);
-    await wait(5, 2);
+    await wait(2, 2);
     if (listLink.length > 0) {
       driver.get(listLink[0].href);
       await wait(2, 2);
@@ -345,6 +376,7 @@ const runProfiles = async (port, name) => {
       if (err === 'suspicious') {
         await driver.close();
         await driver.quit();
+        await wait(50, 2);
         throw new Error('Suspicious activity detected');
       }
     }
@@ -353,10 +385,8 @@ const runProfiles = async (port, name) => {
     const listNewLink = await getMainTargetLinks(driver);
     listNewLink.reverse();
     if (!listNewLink || listNewLink.length === 0) return;
-    await wait(5, 2);
+    await wait(2, 2);
     await restartAllWorker({ driver, listNewLink, port, name });
-
-
     await driver.close();
     await driver.quit();
   } catch (error) {
@@ -441,28 +471,25 @@ const main = async () => {
   const machineName = process.argv[2] || `dnd`;
   const profilePath = path.join(__dirname, 'profile');
   const fileList = readDirectory(profilePath);
-  killChromeProcess();
-  await wait(5, 5);
-  console.log('kill chrome');
-  // fileList.reverse();
+  // killChromeProcess();
+  console.log('__run_all_profile__');
   for (const element of fileList) {
     try {
       const profileStartTime = new Date();
       const port = element.slice(-4);
       console.log('port:', port);
-
       const workerPrefix = `${machineName}-p${port}`;
       const profilePath = path.join(__dirname, 'profile', `chrome-profile${port}`);
       openChrome(port, profilePath);
-      await wait(1, 5);
       await runProfiles(port, workerPrefix);
-      await wait(5, 5);
+      await wait(1, 2);
       const profileEndTime = new Date();
-      const profileDuration = (profileEndTime - profileStartTime) / 60 * 1000;
+      const profileDuration = (profileEndTime - profileStartTime) / (60 * 1000);
       console.log(`done_profile: chrome-profile${port} completed in ${(profileDuration).toFixed(2)} minutes`);
     } catch (error) {
-      console.error('Error in runTerminal:', error);
+      console.error('Error in runProfiles:');
     }
   }
 }
 main();
+// v1.1.0
