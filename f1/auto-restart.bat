@@ -13,5 +13,5 @@ IF "%machine%"=="" SET machine=w
 echo Running run.js with machine: %machine%
 node run.js %machine%
 echo Process exited, restarting in 5 seconds...
-timeout /t 5 /nobreak
+timeout /t 50 /nobreak
 goto start
