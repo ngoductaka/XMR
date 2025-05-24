@@ -113,7 +113,7 @@ const getMainTargetLinks = async (driver) => {
             needRestart = true;
           } else if (timeUnit === 'days') {
             needRestart = true;
-          } else if (timeUnit === 'minutes' && timeValue >= 25) {
+          } else if (timeUnit === 'minutes' && timeValue >= 30) {
             needRestart = true;
           }
         }
@@ -381,8 +381,10 @@ const runProfiles = async (port, name) => {
       }
     }
     await createNewProfileIfCan(driver, listLink, name);
-    // await closeOtherTabs(driver);
-    const listNewLink = await getMainTargetLinks(driver);
+    let listNewLink = listLink;
+    if (listLink.length < 10) {
+      listNewLink = await getMainTargetLinks(driver);
+    }
     listNewLink.reverse();
     if (!listNewLink || listNewLink.length === 0) return;
     await wait(2, 2);
@@ -486,11 +488,12 @@ const main = async () => {
       const profileEndTime = new Date();
       const profileDuration = (profileEndTime - profileStartTime) / (60 * 1000);
       console.log(`done_profile: chrome-profile${port} completed in ${(profileDuration).toFixed(2)} minutes`);
-      process.exit(0);
+      
     } catch (error) {
       console.error('Error in runProfiles:');
     }
   }
+  process.exit(0);
 }
 main();
-// v1.1.1
+// v1.1.2
