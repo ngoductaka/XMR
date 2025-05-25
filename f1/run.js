@@ -76,12 +76,12 @@ const getMainTargetLinks = async (driver) => {
   await wait(2, 2);
   const mainTargetLinks = [];
   // Wait for the page to load and main-target elements to be present
-  await driver.wait(until.elementsLocated(By.css('.main-target')), 10 * 60 * 1000)
+  await driver.wait(until.elementsLocated(By.css('.main-target')), 5 * 60 * 1000)
     .catch(() => {
       console.log('No .main-target elements found within timeout period');
       return mainTargetLinks;
     });
-  await driver.wait(until.elementsLocated(By.css('.subtitle')), 10 * 60 * 1000)
+  await driver.wait(until.elementsLocated(By.css('.subtitle')), 2 * 60 * 1000)
     .catch(() => {
       console.log('No .subtitle elements found within timeout period');
       return mainTargetLinks;
@@ -368,6 +368,7 @@ const runProfiles = async (port, name) => {
   const driver = await connectChrome(port);
   try {
     const listLink = await getMainTargetLinks(driver);
+    console.log('listLink:', listLink.length);
     await wait(2, 2);
     if (listLink.length > 0) {
       driver.get(listLink[0].href);
@@ -483,6 +484,7 @@ const main = async () => {
       const workerPrefix = `${machineName}-p${port}`;
       const profilePath = path.join(__dirname, 'profile', `chrome-profile${port}`);
       openChrome(port, profilePath);
+      await wait(1, 0.5);
       await runProfiles(port, workerPrefix);
       await wait(1, 2);
       const profileEndTime = new Date();
@@ -496,4 +498,4 @@ const main = async () => {
   process.exit(0);
 }
 main();
-// v1.1.2
+// v1.1.5
