@@ -322,12 +322,11 @@ const restartAllWorker = async ({ driver, listNewLink: links, port, name }) => {
       console.log('Link is not archived, skipping:', link.href);
       continue;
     }
-
     await runWorker({ href: link.href, driver, name });
-
     const profileEndTime = new Date();
     const profileDuration = (profileEndTime - profileStartTime) / (60 * 1000);
     console.log(`done_worker: ${count} completed in ${(profileDuration).toFixed(2)} minutes`);
+    await wait(5, 2);
   }
 };
 /**
@@ -498,4 +497,4 @@ const main = async () => {
   process.exit(0);
 }
 main();
-// v1.1.5
+// v1.1.6
