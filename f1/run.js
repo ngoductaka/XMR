@@ -500,11 +500,10 @@ const main = async () => {
   console.log('__run_all_profile__');
 
   const listErrors = await readErrProfiles(path.join(__dirname, 'error_profile.txt'))
-  if (listErrors.includes(`${name}_${port}`)) {
-    console.log('suspicious err:', `${name}_${port}`);
+  if (listErrors.length) {
+    console.log('suspicious err:', listErrors.join(', '));
     await wait(100000000000000000000, 0.5);
     process.exit(0);
-    // return 'suspicious';
   }
 
   for (const element of fileList) {
@@ -532,4 +531,4 @@ const main = async () => {
   process.exit(0);
 }
 main();
-// v1.1.11
+// v1.1.12
