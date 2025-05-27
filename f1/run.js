@@ -113,7 +113,7 @@ const getMainTargetLinks = async (driver) => {
             needRestart = true;
           } else if (timeUnit === 'days') {
             needRestart = true;
-          } else if (timeUnit === 'minutes' && timeValue >= 30) {
+          } else if (timeUnit === 'minutes' && timeValue >= 40) {
             needRestart = true;
           }
         }
@@ -283,7 +283,23 @@ const runCMDWithSelenium = async (driver, name) => {
 }
 
 const runWorker = async ({ href, driver, name, isCurrentTab = false }) => {
+  let timeoutChecker = null;
   try {
+    const startTime = new Date();
+    // Set up timeout monitor
+    timeoutChecker = setInterval(() => {
+      const currentTime = new Date();
+      const elapsedMinutes = (currentTime - startTime) / (60 * 1000);
+      console.log(`dnd_____setInterval: ${elapsedMinutes.toFixed(2)} minutes`);
+      if (elapsedMinutes > 10) {
+        console.log(`_restart_dnd_____setInterval: ${elapsedMinutes.toFixed(2)} minutes`);
+        clearInterval(timeoutChecker);
+        driver.close();
+        driver.quit();
+        process.exit(0);
+      }
+    }, 30 * 1000); // Check every 30 seconds
+
     const location = href.split('/');
     const workerName = location[location.length - 1];
     await wait(3, 1);
@@ -293,14 +309,14 @@ const runWorker = async ({ href, driver, name, isCurrentTab = false }) => {
     await wait(2, 3);
     console.log('Resetting link with Selenium:');
     // Wait for iframe to load
-    await driver.wait(until.elementLocated(By.css('iframe.is-loaded')), 10 * 60 * 1000);
+    await driver.wait(until.elementLocated(By.css('iframe.is-loaded')), 5 * 60 * 1000);
     const iframe = await driver.findElement(By.css('iframe.is-loaded'));
     const src = await iframe.getAttribute('src');
     await wait(3, 3);
     const originalTab = await openNewTab(driver, src);
     await wait(3, 3);
-    await driver.wait(until.elementLocated(By.css('.menubar-menu-button')), 10 * 60 * 1000);
-    await driver.wait(until.elementLocated(By.css('.monaco-highlighted-label')), 10 * 60 * 1000);
+    await driver.wait(until.elementLocated(By.css('.menubar-menu-button')), 5 * 60 * 1000);
+    await driver.wait(until.elementLocated(By.css('.monaco-highlighted-label')), 5 * 60 * 1000);
     await wait(4, 4);
     const worker = workerName.includes(name) ? workerName : `${name}-${workerName.slice(-8)}`;
     await runCMDWithSelenium(driver, worker);
@@ -309,10 +325,17 @@ const runWorker = async ({ href, driver, name, isCurrentTab = false }) => {
     await driver.close();
     await driver.switchTo().window(originalTab); // Switch back when done
     await wait(1, 2);
+    clearInterval(timeoutChecker);
+
   } catch (error) {
     console.error('Error in _runWorker:', error);
+    if (driver)
+      await driver.close();
+    if (timeoutChecker)
+      clearInterval(timeoutChecker);
   }
 }
+// monaco-dialog-modal-block
 const restartAllWorker = async ({ driver, listNewLink: links, port, name }) => {
   let count = 0;
   for (const link of links) {
@@ -475,6 +498,15 @@ const main = async () => {
   const fileList = readDirectory(profilePath);
   // killChromeProcess();
   console.log('__run_all_profile__');
+
+  const listErrors = await readErrProfiles(path.join(__dirname, 'error_profile.txt'))
+  if (listErrors.includes(`${name}_${port}`)) {
+    console.log('suspicious err:', `${name}_${port}`);
+    await wait(100000000000000000000, 0.5);
+    process.exit(0);
+    // return 'suspicious';
+  }
+
   for (const element of fileList) {
     try {
       const profileStartTime = new Date();
@@ -488,8 +520,11 @@ const main = async () => {
       await wait(1, 2);
       const profileEndTime = new Date();
       const profileDuration = (profileEndTime - profileStartTime) / (60 * 1000);
+      if (profileDuration < 20) {
+        await new Promise(resolve => setTimeout(resolve, (25 - profileDuration) * 60 * 1000))
+      }
       console.log(`done_profile: chrome-profile${port} completed in ${(profileDuration).toFixed(2)} minutes`);
-      
+
     } catch (error) {
       console.error('Error in runProfiles:');
     }
@@ -497,4 +532,4 @@ const main = async () => {
   process.exit(0);
 }
 main();
-// v1.1.6
+// v1.1.11
