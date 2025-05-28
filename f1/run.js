@@ -105,11 +105,13 @@ const getMainTargetLinks = async (driver) => {
       let needRestart = thirdSpanText === 'Archived';
       let timeUnit = '';
       if (thirdSpanText.includes('Accessed')) {
-        const timeMatch = thirdSpanText.match(/Accessed (\d+) (minutes?|hours?|days?) ago/);
+        const timeMatch = thirdSpanText.match(/Accessed (\d+) (minutes?|hours?|hour?|days?) ago/);
         if (timeMatch) {
           const timeValue = parseInt(timeMatch[1]);
           timeUnit = timeMatch[2];
           if (timeUnit === 'hours') {
+            needRestart = true;
+          } else if (timeUnit === 'hour') {
             needRestart = true;
           } else if (timeUnit === 'days') {
             needRestart = true;
@@ -520,7 +522,7 @@ const main = async () => {
       const profileEndTime = new Date();
       const profileDuration = (profileEndTime - profileStartTime) / (60 * 1000);
       if (profileDuration < 20) {
-        await new Promise(resolve => setTimeout(resolve, (25 - profileDuration) * 60 * 1000))
+        await new Promise(resolve => setTimeout(resolve, (20 - profileDuration) * 60 * 1000))
       }
       console.log(`done_profile: chrome-profile${port} completed in ${(profileDuration).toFixed(2)} minutes`);
 
@@ -531,4 +533,4 @@ const main = async () => {
   process.exit(0);
 }
 main();
-// v1.1.12
+// v1.1.13
