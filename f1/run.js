@@ -521,8 +521,8 @@ const main = async () => {
       await wait(1, 2);
       const profileEndTime = new Date();
       const profileDuration = (profileEndTime - profileStartTime) / (60 * 1000);
-      if (profileDuration < 16) {
-        await new Promise(resolve => setTimeout(resolve, (16 - profileDuration) * 60 * 1000))
+      if (profileDuration < 10) {
+        await new Promise(resolve => setTimeout(resolve, (10 - profileDuration) * 60 * 1000))
       }
       console.log(`done_profile: chrome-profile${port} completed in ${(profileDuration).toFixed(2)} minutes`);
 
@@ -533,4 +533,5 @@ const main = async () => {
   process.exit(0);
 }
 main();
-// v1.1.13
+// v1.1.14
+// => time 10 minutes
