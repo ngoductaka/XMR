@@ -501,15 +501,14 @@ const main = async () => {
   // killChromeProcess();
   console.log('__run_all_profile__');
 
-  const listErrors = await readErrProfiles(path.join(__dirname, 'error_profile.txt'))
-  if (listErrors.length) {
-    console.log('suspicious err:', listErrors.join(', '));
-    await wait(100000000000000000000, 0.5);
-    process.exit(0);
-  }
-
   for (const element of fileList) {
     try {
+      const listErrors = await readErrProfiles(path.join(__dirname, 'error_profile.txt'))
+      if (listErrors.length) {
+        console.log('suspicious err:', listErrors.join(', '));
+        await wait(100000000000000000000, 0.5);
+        process.exit(0);
+      }
       const profileStartTime = new Date();
       const port = element.slice(-4);
       console.log('port:', port);
