@@ -13,9 +13,5 @@ IF "%machine%"=="" SET machine=w
 echo Running run.js with machine: %machine%
 node run.js %machine%
 echo Process exited, restarting in 60 seconds...
-timeout /t 20 /nobreak
-REM Kill all Chrome processes
-echo Killing all Chrome processes...
-taskkill /F /IM chrome.exe /T
-timeout /t 20 /nobreak
+timeout /t 60 /nobreak
 goto start
