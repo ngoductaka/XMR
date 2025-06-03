@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
-const wait = (min, maxPlus) => new Promise(resolve => setTimeout(resolve, (min + maxPlus * Math.random()) * 1000))
+const wait = (min, maxPlus) => new Promise(resolve => setTimeout(resolve, (min * 2 + maxPlus * Math.random()) * 1000))
 
 async function waitForClassToExist(page, classSelector, maxWaitTimeMs = 5 * 60 * 1000, checkIntervalMs = 10 * 1000) {
     console.log(`Starting to wait for class '${classSelector}' to appear...`);
@@ -178,17 +178,55 @@ const openHomePageAndGetLinks = async (browser) => {
     let page = await browser.newPage();
     try {
         await page.goto('https://idx.google.com');
-        await page.waitForSelector('.workspace-id', { timeout: 22 * 1000 }).catch(() => {
+        await page.waitForSelector('.subtitle', { timeout: 22 * 1000 }).catch(() => {
             return { browser, page, mainTargetLinks: [] };
         });
 
         // Get list of <a> tags with ID/class main-target and their href values
+        console.log('Waiting for subtitle element...');
         const mainTargetLinks = await page.evaluate(() => {
-            const classElements = document.querySelectorAll('.workspace-id');
-            const allElements = Array.from(classElements);
-            return allElements.map(el => ({ href: `https://idx.google.com/${el.textContent}` }));
+            console.log('00000')
+            const subtitleElement = document.querySelectorAll('.subtitle');
+            console.log('subtitleElement:', subtitleElement);
+            if (!subtitleElement) return [];
+            // const allElements = Array.from(subtitleElement);
+            return Array.from(subtitleElement).map((el) => {
+                const spans = el.querySelectorAll('span');
+                if (spans.length < 3) return null;
+                const link = spans[0].textContent;
+                const thirdSpanText = spans[2].textContent;
+
+                let needRestart = thirdSpanText.includes('Archived');
+                let timeUnit = '';
+                if (thirdSpanText.includes('Accessed')) {
+                    const timeMatch = thirdSpanText.match(/Accessed (\d+) (minutes?|hours?|hour?|days?) ago/);
+                    if (timeMatch) {
+                        const timeValue = parseInt(timeMatch[1]);
+                        timeUnit = timeMatch[2];
+                        if (timeUnit === 'hours') {
+                            needRestart = true;
+                        } else if (timeUnit === 'hour') {
+                            needRestart = true;
+                        } else if (timeUnit === 'days') {
+                            needRestart = true;
+                        } else if (timeUnit === 'minutes'
+                            // && timeValue >= 40
+                        ) {
+                            needRestart = false;
+                        }
+                    }
+                }
+
+                return {
+                    href: `https://idx.google.com/${link}`,
+                    time: thirdSpanText,
+                    needRestart
+                }
+            });
+
         });
         console.log('Found workspace-id main-target:', mainTargetLinks, mainTargetLinks.length);
+        // await wait(1000, 20);
         return { browser, page, mainTargetLinks };
     }
     catch (error) {
@@ -288,7 +326,7 @@ const runCMD1 = async (page, name) => {
     for (const cmd of commands) {
         await page.focus('.xterm-helper-textarea');
         await page.type('.xterm-helper-textarea', cmd);
-        await wait(0.1, 0.2);
+        await new Promise(resolve => setTimeout(resolve, 10));
     }
     await page.evaluate(() => {
         const textarea = document.querySelector('.xterm-helper-textarea');
@@ -456,7 +494,7 @@ const create = async (page, name) => {
         await page.waitForSelector('#mat-input-0');
         await page.type('#mat-input-0', name);
         await page.keyboard.press('Enter');
-        await page.waitForSelector('iframe.is-loaded', { timeout: 60 * 1000 });
+        await page.waitForSelector('iframe.is-loaded', { timeout: 10 * 60 * 1000 });
         await page.close();
     } catch (error) {
         return 'create_fail';
@@ -504,7 +542,6 @@ const runJob = async (port, name) => {
     const { browser } = await openOldConnection(port);
     try {
         const { page, mainTargetLinks } = await openHomePageAndGetLinks(browser);
-        console.log('__mainTargetLinks:', mainTargetLinks);
         await wait(10, 20)
         if (mainTargetLinks.length > 0) {
             console.log('open link: check google fails');
@@ -521,8 +558,10 @@ const runJob = async (port, name) => {
         await wait(10, 20)
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
+                const startTime = Date.now();
                 const result = await create(page, `${name}-w${i}-`);
-
+                const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                console.log(`Created new page in ${elapsedTime} seconds`);
                 await wait(10, 20)
                 if (result === 'create_fail') {
                     console.log('Error creating new page');
@@ -531,18 +570,21 @@ const runJob = async (port, name) => {
             }
         }
         console.log('done creating new page');
-
-        const { mainTargetLinks: listLInk } = await openHomePageAndGetLinks(browser);
+        let listLInk = mainTargetLinks
+        if (mainTargetLinks.length < 10) {
+            const { mainTargetLinks: listLInks } = await openHomePageAndGetLinks(browser);
+            listLInk = listLInks;
+        }
         await closeAllTabs(browser, true);
-
-        // console.log('open link: check google fails done');
         let count = 0;
         for (const link of listLInk) {
             const profileStartTime = Date.now();
-
+            console.log('needRestart: ', link.needRestart, '____', link.time);
             await wait(10, 9)
-            await reset(browser, link.href, name).catch(console.error);
-
+            if (link.needRestart) {
+                console.log('restart', link.href);
+                await reset(browser, link.href, name).catch(console.error);
+            }
             const profileTime = ((Date.now() - profileStartTime) / 60000).toFixed(2);
             console.log(`__dnd__Completed_worker ${name} - ${++count} in ${profileTime} minutes`);
 
@@ -610,22 +652,19 @@ const runTerminal = (name, port, runPath) => {
 
 }
 
-const runAllProfile = async (machine, profilePath, runPath) => {
+const runAllProfile = async (machine, dirname) => {
     try {
-        await killChromeProcess().catch(console.error);
+        const profilePath = path.join(dirname, 'profile');
         await new Promise(resolve => setTimeout(resolve, 3 * 1000));
         const fileList = readDirectory(profilePath);
         let countProfile = 0;
         for (const element of fileList) {
-
             const profileStartTime = Date.now();
             try {
-
                 const count = element.slice(-4);
-                await runTerminal(`${machine}-p${count}`, count, runPath);
+                const profileDetailPath = path.resolve(dirname, 'profile', `chrome-profile${count}`);
+                await combineOpenReset(count, `${machine}-p${count}`, profileDetailPath);
                 await new Promise(resolve => setTimeout(resolve, 3 * 1000));
-
-
             } catch (error) {
                 console.error('Error in runTerminal:', error);
             } finally {
@@ -689,4 +728,4 @@ module.exports = {
     runAllProfile,
 }
 // cop file nay nhe
-// v5.20.13 => phien ban code
+// v3.6.01 => phien ban code
