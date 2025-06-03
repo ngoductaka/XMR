@@ -5,20 +5,19 @@ const path = require('path');
 const main = async (machine, runInRangeTime = '') => {
     var now = new Date();
     var hour = now.getHours();
-    const profilePath = path.join(__dirname, 'profile');
-    const runPath = path.join(__dirname, 'run.js');
-    console.log('_____________________________start', new Date().toLocaleTimeString());
-    if (runInRangeTime) {
-        if (hour >= 0 && hour < 12) {
-            await runAllProfile(machine, profilePath, runPath);
-        }
+    const startTime = Date.now();
+    console.log(hour, '_____________________________runInRangeTime == 2 && hour > 12', runInRangeTime == 2 && hour > 12);
+    console.log(hour, '_____________________________runInRangeTime == 1 && hour < 12:', runInRangeTime == 1 && hour < 12);
+    if (runInRangeTime == 1 && hour < 12) {
+        await runAllProfile(machine, __dirname);
+    } else if (runInRangeTime == 2 && hour > 12) {
+        await runAllProfile(machine, __dirname);
     } else {
-        await runAllProfile(machine, profilePath, runPath);
+        await runAllProfile(machine, __dirname);
     }
-    setTimeout(() => {
-        console.log('_____________________________restart', new Date().toLocaleTimeString());
-        main(machine, runInRangeTime);
-    }, 5 * 1000);
+    const endTime = Date.now();
+    const executionTime = (endTime - startTime) / (60 * 1000); // Convert to seconds
+    console.log(`_____________________________finished in ${executionTime.toFixed(2)} minute`);
 }
 
 const machine = process.argv[2] || 'w';
