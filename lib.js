@@ -458,6 +458,7 @@ const TELEGRAM_BOT_TOKEN = '7668129713:AAGGfomtEre-W2QH0r1FUPL1Z9pKSd0KMlQ';
 // const TELEGRAM_CHAT_ID = '1140704410';
 const TELEGRAM_CHAT_ID = '-4750007696'; // group chat id
 
+
 const reset = async (browser, link, name) => {
     try {
         const location = link.split('/');
@@ -494,7 +495,16 @@ const create = async (page, name) => {
         await page.waitForSelector('#mat-input-0');
         await page.type('#mat-input-0', name);
         await page.keyboard.press('Enter');
-        await page.waitForSelector('iframe.is-loaded', { timeout: 10 * 60 * 1000 });
+        await page.waitForSelector('iframe.is-loaded', { timeout: 20 * 60 * 1000 });
+
+        const iframeSrc = await page.evaluate(() => {
+            const iframe = document.querySelector('iframe.is-loaded');
+            return iframe ? iframe.src : null;
+        });
+        await resetWithLink(page, iframeSrc, name).catch(async (err) => {
+            console.error('Error resetting with link::________________dnd____', err);
+        });
+
         await page.close();
     } catch (error) {
         return 'create_fail';
@@ -558,14 +568,20 @@ const runJob = async (port, name) => {
         await wait(10, 20)
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
-                const startTime = Date.now();
-                const result = await create(page, `${name}-w${i}-`);
-                const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
-                console.log(`Created new page in ${elapsedTime} seconds`);
-                await wait(10, 20)
-                if (result === 'create_fail') {
-                    console.log('Error creating new page');
-                    break;
+                try {
+                    const startTime = Date.now();
+                    const result = await create(page, `${name}-w${i}-`);
+                    const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                    console.log(`Created new page in ${elapsedTime} seconds`);
+                    await wait(10, 20)
+                    if (result === 'create_fail') {
+                        console.log('Error creating new page');
+                        break;
+                    }
+                } catch (error) {
+                    console.error('Error in runJob:', error);
+                    await new Promise(resolve => setTimeout(resolve, 30 * 1000));
+                    continue;
                 }
             }
         }
@@ -728,4 +744,4 @@ module.exports = {
     runAllProfile,
 }
 // cop file nay nhe
-// v3.6.01 => phien ban code
+// v3.6.02 => phien ban code
